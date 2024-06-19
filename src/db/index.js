@@ -17,7 +17,7 @@ export default function connectDb() {
       console.log('*********** 数据库断开 ***********');
       if (maxConnectTimes < 3) {
         maxConnectTimes++;
-        mongoose.connect(db);
+        mongoose.connect(dbUrl);
       } else {
         reject(new Error('数据库连接失败'));
         throw new Error('数据库连接失败');
@@ -28,7 +28,7 @@ export default function connectDb() {
       console.log('*********** 数据库错误 ***********');
       if (maxConnectTimes < 3) {
         maxConnectTimes++;
-        mongoose.connect(db);
+        mongoose.connect(dbUrl);
       } else {
         reject(error);
         throw new Error('数据库连接失败');

@@ -1,15 +1,15 @@
 import Koa from 'koa'
-import { port, env } from './config'
+import { port, env, keys } from './config'
 import connectDb from './db'
 import * as middleware from './middleware'
-import router from './router'
+import * as router from './router'
 (async () => {
-  await connectDb()
   const app = new Koa()
+  await connectDb()
   middleware.init(app)
-  if (app.env !== env) {
-    app.env = env
-  }
+  router.init(app)
+  app.env = env
+  app.keys = keys
   app.listen(port, () => {
     console.log(`Server running on port ${port}`)
   })

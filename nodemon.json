@@ -7,12 +7,12 @@
     ],
     "verbose": true,
     "colours": true,
-    "exec": "babel-node src/main.js",
+    "exec": "npm run lint & babel-node src/main.js",
     "execMap": {
       "js": "node --harmony"
     },
     "events": {
-      "start": "osascript -e 'display notification \"App started success\"'"
+
     },
     "watch": [
       "src"
@@ -23,4 +23,3 @@
     "ext": "js,json",
     "delay": 100
   }
-  
