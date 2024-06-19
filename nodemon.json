@@ -1,0 +1,26 @@
+{
+    "restartable": false,
+    "ignore": [
+      ".git",
+      "dist",
+      "node_modules/**/node_modules"
+    ],
+    "verbose": true,
+    "colours": true,
+    "exec": "babel-node src/main.js",
+    "execMap": {
+      "js": "node --harmony"
+    },
+    "events": {
+      "start": "osascript -e 'display notification \"App started success\"'"
+    },
+    "watch": [
+      "src"
+    ],
+    "env": {
+      "NODE_ENV": "development"
+    },
+    "ext": "js,json",
+    "delay": 100
+  }
+  
