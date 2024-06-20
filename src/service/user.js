@@ -2,6 +2,19 @@ const mobilePhoneModel = require('../models/mobilePhone');
 const UserModel = require('../models/user');
 const mongoose = require('mongoose');
 const sendSMSCode = require('../utils/sms');
+import { md5 } from '../utils/share'
+
+export function signup(username, pwd, phone, roles) {
+  const password = md5(pwd)
+
+  const newUser = new UserModel({
+    username,
+    password,
+    roles,
+    phone,
+  })
+  return newUser.save()
+}
 
 // “投影” (projection) | 数据库需要返回的数据
 const PROJECTION = { _id: 1, userName: 1, gender: 1, avatar: 1, mobilePhone: 1, email: 1, year: 1, month: 1, day: 1 };
@@ -84,19 +97,19 @@ class userService {
    * @param {Object}
    * @param {Number} handleFlag 处理标识 1: 登录, 2: 注册
    */
-  async accountHandle({ userName, password, mobilePhone }, handleFlag = 1) {
+  async accountHandle({ userName, password, mobile }, handleFlag = 1) {
     try {
-      const userDoc = await UserModel.findOne({ mobilePhone });
+      const userDoc = await UserModel.findOne({ mobile });
       if (!userDoc) {
         switch (handleFlag) {
           case 1:
             return { code: -1, msg: '账号不存在, 可先注册' };
           case 2:
             // 查询是否已存在同用户名
-            const user = await UserModel.findOne({ userName });
+            const user = await UserModel.findOne({ mobile });
             if (user) return { code: 0, msg: '用户名已存在' };
             // 注册账号
-            let userEntity = new UserModel({ userName, password, mobilePhone });
+            let userEntity = new UserModel({ userName, password, mobile });
             // 保存到数据库中
             let userInfo = await userEntity.save();
             return {
@@ -105,14 +118,9 @@ class userService {
               userName: userInfo.userName,
               gender: userInfo.gender,
               avatar: userInfo.avatar,
-              mobilePhone: userInfo.mobilePhone,
-              email: userInfo.email,
-              year: userInfo.year,
-              month: userInfo.month,
-              day: userInfo.day
+              mobile: Number(userInfo.mobile),
             };
         }
-
       } else {
         switch (handleFlag) {
           case 1:
@@ -123,17 +131,11 @@ class userService {
               : {
                   code: 200,
                   _id: userDoc._id,
-                  userName: userDoc.userName,
-                  gender: userDoc.gender,
-                  avatar: userDoc.avatar,
-                  mobilePhone: userDoc.mobilePhone,
-                  email: userDoc.email,
-                  year: userDoc.year,
-                  month: userDoc.month,
-                  day: userDoc.day
+                  nickname: userDoc.userName,
+                  mobile: Number(userInfo.mobile),
                 };
           case 2:
-            return (userDoc.mobilePhone === mobilePhone) && { code: 1, msg: '账号已存在, 可直接登录' };
+            return (userDoc.mobile === mobile) && { code: 1, msg: '账号已存在, 可直接登录' };
         }
       }
     } catch (error) {

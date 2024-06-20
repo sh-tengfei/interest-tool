@@ -2,7 +2,7 @@ const Router = require('koa-router');
 const userService = require('../service/user');
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
-const jwt = require('../utils/jwt');
+const { encode, decode } = require('../utils/token');
 
 const router = new Router();
 
@@ -10,16 +10,17 @@ const router = new Router();
  * 用户注册
  */
 router.post('/register', async (ctx) => {
-  let { userName, password, mobilePhone, smsCode } = ctx.request.body;
-  if (!userName || !password || !mobilePhone || !smsCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
-  if (!ctx.session.smsCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
-  if (ctx.session.smsCode !== smsCode) return ctx.body = { code: 5020, msg: '验证码不正确' };
-
-  let args = { userName, password, mobilePhone };
+  let { userName, password, mobile, picCode } = ctx.request.body;
+  if (!userName || !password || !mobile || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
+  if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
+  let sPicCode = ctx.session.picCode.toLocaleLowerCase()
+  if (sPicCode.toLocaleLowerCase() !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
+  let args = { userName, password, mobile: String(mobile) };
   try {
     const userData = await userService.accountHandle(args, 2); // 2: 表示注册处理
+    console.log(userData)
     ctx.body = (userData.code === 200)
-      ? { code: 200, msg: '注册成功', token: jwt._createToken(userData) }
+      ? { code: 200, msg: '注册成功', token: encode(userData) }
       : userData;
   } catch(error) {
     console.log(error);
@@ -76,8 +77,8 @@ router.post('/sendSMSCode', async (ctx) => {
  */
 router.get('/sendPicCode', async (ctx) => {
   let picCode = tools.createCaptcha();
-  // 将验证码保存入 cookie 中
-  ctx.cookies.picCode = picCode.text;
+  // 将验证码保存入 session 中
+  ctx.session.picCode = picCode.text;
   // 指定返回的类型
   ctx.response.type = 'image/svg+xml';
   ctx.body = picCode.data;
