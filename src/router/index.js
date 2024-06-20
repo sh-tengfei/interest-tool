@@ -1,8 +1,8 @@
 import Router from 'koa-router'
-import user from './user'
+import user, { path } from './user'
 
 const router = new Router()
-router.use(user.routes())
+router.use(path, user.routes())
 
 export function init(app) {
   app.use(router.routes())

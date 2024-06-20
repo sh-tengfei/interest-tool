@@ -22,3 +22,8 @@ export const port = ports[NODE_ENV]
 export const env = NODE_ENV
 export const secret = secrets[NODE_ENV]
 export const keys = keyss[NODE_ENV]
+
+export const errorCode = {
+  exists: 11000
+}
+

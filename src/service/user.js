@@ -16,6 +16,26 @@ export function signup(username, pwd, phone, roles) {
   return newUser.save()
 }
 
+export async function findById(id) {
+  const user = await UserModel.findById(id).select('+roles +createdAt')
+  return user
+}
+
+
+export async function signin(phone, password) {
+  const user = await UserModel.findOne({ phone }).select('password salt')
+  if (!user || md5(password) !== user.password) {
+    return {
+      isSignin: false,
+      user: null,
+    }
+  }
+  return {
+    isSignin: true,
+    user: await findById(user._id),
+  }
+}
+
 // “投影” (projection) | 数据库需要返回的数据
 const PROJECTION = { _id: 1, userName: 1, gender: 1, avatar: 1, mobilePhone: 1, email: 1, year: 1, month: 1, day: 1 };
 
@@ -358,4 +378,4 @@ class userService {
   }
 }
 
-module.exports = new userService();
+export default new userService();

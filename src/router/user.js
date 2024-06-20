@@ -1,8 +1,12 @@
 const Router = require('koa-router');
+import * as mongodb from 'mongodb'
 const userService = require('../service/user');
+import { signup, signin } from '../service/user'
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
 const { encode, decode } = require('../utils/token');
+import { errorCode } from '../config'
+import userAuthed from '../middleware/userAuthed'
 
 const router = new Router();
 
@@ -10,20 +14,30 @@ const router = new Router();
  * 用户注册
  */
 router.post('/register', async (ctx) => {
-  let { userName, password, mobile, picCode } = ctx.request.body;
-  if (!userName || !password || !mobile || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
+  let { userName, password, phone, picCode, roles = 1 } = ctx.request.body;
+  if (!userName || !password || !phone || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
   if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
   let sPicCode = ctx.session.picCode.toLocaleLowerCase()
   if (sPicCode.toLocaleLowerCase() !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
-  let args = { userName, password, mobile: String(mobile) };
+  ctx.session.picCode = null
   try {
-    const userData = await userService.accountHandle(args, 2); // 2: 表示注册处理
-    console.log(userData)
-    ctx.body = (userData.code === 200)
-      ? { code: 200, msg: '注册成功', token: encode(userData) }
-      : userData;
-  } catch(error) {
-    console.log(error);
+    const user = await signup(String(userName), String(password), String(phone), roles)
+    ctx.token = {
+      time: Date.now(),
+      uid: user.roles,
+      id: String(user._id),
+    }
+    ctx.success(user, '注册成功')
+  } catch (e) {
+    if (e instanceof mongodb.MongoServerError && e.code === errorCode.exists) {
+      const errors = Object.keys(e.keyValue).map((key) => {
+        return {
+          field: key,
+          msg: 'exists',
+        }
+      })
+      return ctx.error({ data: errors, message: '手机号已注册！' })
+    }
   }
 });
 
@@ -31,21 +45,24 @@ router.post('/register', async (ctx) => {
  * 用户登录
  */
 router.post('/login', async (ctx) => {
-  let { mobilePhone , password, verifyCode } = ctx.request.body;
+  let { phone, password } = ctx.request.body;
 
-  if (!mobilePhone || !password || !verifyCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
-  if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
-  if (ctx.session.picCode.toUpperCase() !== verifyCode.toUpperCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
-
-  let args = { mobilePhone, password };
-  try {
-    const userData = await userService.accountHandle(args, 1); // 1: 表示登录处理
-    ctx.body = (userData.code === 200)
-      ? { code: 200, msg: '登录成功', token: jwt._createToken(userData) }
-      : userData;
-  } catch(error) {
-    console.log(error);
+  const result = await signin(String(phone), String(password))
+  if (!result.isSignin || result.user === null) {
+    return ctx.error({
+      message: '用户不存在或密码错误',
+    })
   }
+
+  ctx.token = {
+    time: Date.now(),
+    uid: result.user.roles,
+    id: String(result.user._id),
+  }
+
+  ctx.success({
+    token: encode(ctx.token),
+  })
 });
 
 /**
@@ -81,20 +98,29 @@ router.get('/sendPicCode', async (ctx) => {
   ctx.session.picCode = picCode.text;
   // 指定返回的类型
   ctx.response.type = 'image/svg+xml';
+  console.log(picCode.text, 'picCode')
   ctx.body = picCode.data;
 });
 
 /**
  * 获取用户信息
  */
-router.get('/userInfo', checkUserStat, async (ctx) => {
-  ctx.body = ctx.userInfo ? { code: 200, userInfo: ctx.userInfo  } : { code: 488, msg: '未知错误' };
+router.get('/info', userAuthed, async (ctx) => {
+  const user = ctx.user
+  ctx.success({
+    user,
+    token: encode({
+      time: Date.now(),
+      uid: user.roles,
+      id: String(user._id),
+    }),
+  })
 });
 
 /**
  * 更新用户信息
  */
-router.post('/updateUserInfo', checkUserStat, async (ctx) => {
+router.post('/update', checkUserStat, async (ctx) => {
   if (ctx.userInfo) {
     const { mobilePhone } = ctx.userInfo;
     const needUpdateInfo = ctx.request.body;
@@ -272,4 +298,5 @@ router.post('/commentDetails', checkUserStat, async (ctx) => {
   }
 });
 
-module.exports = router;
+export const path = '/user'
+export default router
