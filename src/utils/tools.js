@@ -17,11 +17,11 @@ class Tools {
   // 生成 svg base64 格式的验证码
   createCaptcha(length) {
     const opt = {
-      size: 4,
+      length: 4,
       noise: 1,
-      fontSize: 35,
-      width: 100,
-      height: 35,
+      // fontSize: 40,
+      width: 160,
+      height: 100,
       background: '#bc51e6'
     }
     // const captcha = svgCaptcha.create(opt);
@@ -32,7 +32,7 @@ class Tools {
   // ip 定位城市 | 使用百度地图 API
   ipLocation(clientIp) {
     let basicuri = 'http://api.map.baidu.com/location/ip?';
-    
+
     const baiduMapParams = {
       ip: clientIp,
       ak: 'aTETpT7NGwDnUrTf7bROng6SttoQEv6O'

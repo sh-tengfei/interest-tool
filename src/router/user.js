@@ -1,6 +1,6 @@
 import Router from'koa-router';
 import * as mongodb from 'mongodb'
-import { signup, signin, updatePwd, findById, findByPhone, updateUser } from '../service/user'
+import { signup, signin, updatePwd, findById, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
 import { errorCode } from '../config'
 import userAuthed from '../middleware/userAuthed'
 const checkUserStat = require('../middleware/checkUserStat');
@@ -16,6 +16,7 @@ const router = new Router();
 router.post('/register', async (ctx) => {
   const { userName, password, prepassword, phone, picCode, roles = 1 } = ctx.request.body || {};
   if (!userName || !password || !phone || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
+  console.log(ctx.captcha, 4)
   if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
   if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
   if (password !== prepassword) {
@@ -23,7 +24,6 @@ router.post('/register', async (ctx) => {
       message: '两次密码不同',
     })
   }
-  ctx.session.picCode = null
   try {
     const user = await signup(String(userName), String(password), String(phone), roles)
     ctx.token = {
@@ -92,8 +92,21 @@ router.post('/resetPwd', async (ctx) => {
   if (!phone || !password || !phone || !picCode || !prePassword) return ctx.body = { code: 4020, msg: '请输入完整信息' };
   if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
   if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
-  ctx.session.picCode = null
   let user = await updatePwd(String(phone), String(password));
+  ctx.token = {
+    time: Date.now(),
+    uid: user.roles,
+    id: String(user._id),
+  }
+  ctx.success(user, '重置成功')
+});
+
+/**
+ * 忘记密码找回
+ */
+router.post('/getWxPhone', async (ctx) => {
+  let { code, encryptedData, iv } = ctx.request.body;
+  let user = await getWxEncryptedData(code, encryptedData, iv)
   ctx.token = {
     time: Date.now(),
     uid: user.roles,
@@ -105,11 +118,15 @@ router.post('/resetPwd', async (ctx) => {
 /**
  * 发送图片验证码
  */
-router.get('/sendPicCode', async (ctx) => {
-  let image = tools.createCaptcha(4);
-  // 将验证码保存入 session 中
-  ctx.session.picCode = image.value.toLocaleLowerCase();
-  ctx.success(image)
+router.get('/picCode', async (ctx) => {
+  let captcha = tools.createCaptcha(4);
+  // 将验证码保存入 cookie 中
+  const code = captcha.value.toLocaleLowerCase()
+  ctx.captcha = {
+    time: Date.now(),
+    code: code,
+  }
+  ctx.success(captcha.image)
 });
 
 /**
@@ -122,7 +139,7 @@ router.post('/update', userAuthed, async (ctx) => {
     if (updateInfo.phone) {
       updateInfo.phone = String(updateInfo.phone)
       let phoneUser = await findByPhone(updateInfo.phone);
-      if (phoneUser) return ctx.error({  message: '该手机号已存在' })  
+      if (phoneUser) return ctx.error({  message: '该手机号已存在' })
     }
     user = await updateUser(id, updateInfo); // 更新用户信息
     ctx.success(user, '更新成功')

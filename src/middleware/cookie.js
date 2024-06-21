@@ -18,6 +18,11 @@ export default async(ctx, next) => {
   // }
   ctx.token = token
 
+  let captcha = ctx.cookies.get('captcha')
+  if (captcha) {
+    ctx.captcha = decode(captcha)
+  }
+
   ctx.userAuthed = async () => {
     if (!mongoose.Types.ObjectId.isValid(token.id)) {
       return false
@@ -36,11 +41,19 @@ export default async(ctx, next) => {
   }
 
   await next()
-
-  ctx.cookies.set('token', encode(ctx.token), {
-    maxAge: 1000 * 60 * 60 * 12,
-    signed: true,
-    path: '/',
-    // secure: true,
-  })
+  if (ctx.captcha) {
+    console.log(ctx.captcha)
+    ctx.cookies.set('captcha', encode(ctx.captcha), {
+      maxAge: 1000 * 60 * 60 * 12,
+      signed: true,
+      path: '/',
+      // secure: true,
+    })
+  }
+  // ctx.cookies.set('token', encode(ctx.token), {
+  //   maxAge: 1000 * 60 * 60 * 12,
+  //   signed: true,
+  //   path: '/',
+  //   // secure: true,
+  // })
 }
