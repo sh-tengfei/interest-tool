@@ -1,12 +1,12 @@
-const Router = require('koa-router');
+import Router from'koa-router';
 import * as mongodb from 'mongodb'
-const userService = require('../service/user');
 import { signup, signin, updatePwd, findById, findByPhone, updateUser } from '../service/user'
+import { errorCode } from '../config'
+import userAuthed from '../middleware/userAuthed'
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
 const { encode, decode } = require('../utils/token');
-import { errorCode } from '../config'
-import userAuthed from '../middleware/userAuthed'
+const userService = require('../service/user');
 
 const router = new Router();
 
@@ -69,7 +69,6 @@ router.post('/login', async (ctx) => {
   })
 });
 
-
 /**
  * 获取用户信息
  */
@@ -104,6 +103,35 @@ router.post('/resetPwd', async (ctx) => {
 });
 
 /**
+ * 发送图片验证码
+ */
+router.get('/sendPicCode', async (ctx) => {
+  let image = tools.createCaptcha(4);
+  // 将验证码保存入 session 中
+  ctx.session.picCode = image.value.toLocaleLowerCase();
+  ctx.success(image)
+});
+
+/**
+ * 更新用户信息
+ */
+router.post('/update', userAuthed, async (ctx) => {
+  const { id } = ctx.user;
+  const updateInfo = ctx.request.body;
+  if (user) {
+    if (updateInfo.phone) {
+      updateInfo.phone = String(updateInfo.phone)
+      let phoneUser = await findByPhone(updateInfo.phone);
+      if (phoneUser) return ctx.error({  message: '该手机号已存在' })  
+    }
+    user = await updateUser(id, updateInfo); // 更新用户信息
+    ctx.success(user, '更新成功')
+  } else {
+    ctx.error({ message: '用户不存在' })
+  }
+});
+
+/**
  * 发送短信验证码
  */
 router.post('/sendSMSCode', async (ctx) => {
@@ -124,41 +152,6 @@ router.post('/sendSMSCode', async (ctx) => {
     ctx.body = smsCodeData;
   } catch(error) {
     console.log(error);
-  }
-});
-
-/**
- * 发送图片验证码
- */
-router.get('/sendPicCode', async (ctx) => {
-  let picCode = tools.createCaptcha();
-  // 将验证码保存入 session 中
-  ctx.session.picCode = picCode.text.toLocaleLowerCase();
-  // 指定返回的类型
-  ctx.response.type = 'image/svg+xml';
-  console.log(picCode.text, 'picCode')
-  ctx.body = picCode.data;
-});
-
-
-/**
- * 更新用户信息
- */
-router.post('/update', userAuthed, async (ctx) => {
-  const { id } = ctx.user;
-  const updateInfo = ctx.request.body;
-  let user = await findById(id)
-  console.log(user)
-  if (user) {
-    if (updateInfo.phone) {
-      updateInfo.phone = String(updateInfo.phone)
-      let phoneUser = await findByPhone(updateInfo.phone);
-      if (phoneUser) return ctx.error({  message: '该手机号已存在' })  
-    }
-    user = await updateUser(id, updateInfo); // 更新用户信息
-    ctx.success(user, '更新成功')
-  } else {
-    ctx.error({ message: '用户不存在' })
   }
 });
 

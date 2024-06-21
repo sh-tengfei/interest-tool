@@ -2,6 +2,7 @@ let sd = require('silly-datetime');
 let svgCaptcha = require('svg-captcha'); // 生成 svg 格式的验证码
 let request = require('request');
 let querystring = require('querystring');
+let base64Captcha = require('@bestdon/nodejs-captcha');
 
 /**
  * 工具封装
@@ -13,18 +14,19 @@ class Tools {
     return sd.format(new Date(), format);
   }
 
-  // 生成 svg 格式的验证码
-  createCaptcha() {
-    const captcha = svgCaptcha.create({
+  // 生成 svg base64 格式的验证码
+  createCaptcha(length) {
+    const opt = {
       size: 4,
       noise: 1,
       fontSize: 35,
       width: 100,
       height: 35,
       background: '#bc51e6'
-    });
-
-    return captcha;
+    }
+    // const captcha = svgCaptcha.create(opt);
+    const captcha = base64Captcha(opt);
+    return captcha
   }
 
   // ip 定位城市 | 使用百度地图 API
