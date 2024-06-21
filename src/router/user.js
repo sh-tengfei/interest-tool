@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 import * as mongodb from 'mongodb'
 const userService = require('../service/user');
-import { signup, signin } from '../service/user'
+import { signup, signin, updatePwd, findById, findByPhone, updateUser } from '../service/user'
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
 const { encode, decode } = require('../utils/token');
@@ -14,11 +14,15 @@ const router = new Router();
  * 用户注册
  */
 router.post('/register', async (ctx) => {
-  let { userName, password, phone, picCode, roles = 1 } = ctx.request.body;
+  const { userName, password, prepassword, phone, picCode, roles = 1 } = ctx.request.body || {};
   if (!userName || !password || !phone || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
   if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
-  let sPicCode = ctx.session.picCode.toLocaleLowerCase()
-  if (sPicCode.toLocaleLowerCase() !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
+  if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
+  if (password !== prepassword) {
+    return ctx.error({
+      message: '两次密码不同',
+    })
+  }
   ctx.session.picCode = null
   try {
     const user = await signup(String(userName), String(password), String(phone), roles)
@@ -45,7 +49,7 @@ router.post('/register', async (ctx) => {
  * 用户登录
  */
 router.post('/login', async (ctx) => {
-  let { phone, password } = ctx.request.body;
+  let { phone, password } = ctx.request.body || {};
 
   const result = await signin(String(phone), String(password))
   if (!result.isSignin || result.user === null) {
@@ -63,6 +67,40 @@ router.post('/login', async (ctx) => {
   ctx.success({
     token: encode(ctx.token),
   })
+});
+
+
+/**
+ * 获取用户信息
+ */
+router.get('/info', userAuthed, async (ctx) => {
+  const user = ctx.user
+  ctx.success({
+    user,
+    token: encode({
+      time: Date.now(),
+      uid: user.roles,
+      id: String(user._id),
+    }),
+  })
+});
+
+/**
+ * 忘记密码找回
+ */
+router.post('/resetPwd', async (ctx) => {
+  let { phone, password, prePassword, picCode } = ctx.request.body;
+  if (!phone || !password || !phone || !picCode || !prePassword) return ctx.body = { code: 4020, msg: '请输入完整信息' };
+  if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
+  if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
+  ctx.session.picCode = null
+  let user = await updatePwd(String(phone), String(password));
+  ctx.token = {
+    time: Date.now(),
+    uid: user.roles,
+    id: String(user._id),
+  }
+  ctx.success(user, '重置成功')
 });
 
 /**
@@ -95,43 +133,32 @@ router.post('/sendSMSCode', async (ctx) => {
 router.get('/sendPicCode', async (ctx) => {
   let picCode = tools.createCaptcha();
   // 将验证码保存入 session 中
-  ctx.session.picCode = picCode.text;
+  ctx.session.picCode = picCode.text.toLocaleLowerCase();
   // 指定返回的类型
   ctx.response.type = 'image/svg+xml';
   console.log(picCode.text, 'picCode')
   ctx.body = picCode.data;
 });
 
-/**
- * 获取用户信息
- */
-router.get('/info', userAuthed, async (ctx) => {
-  const user = ctx.user
-  ctx.success({
-    user,
-    token: encode({
-      time: Date.now(),
-      uid: user.roles,
-      id: String(user._id),
-    }),
-  })
-});
 
 /**
  * 更新用户信息
  */
-router.post('/update', checkUserStat, async (ctx) => {
-  if (ctx.userInfo) {
-    const { mobilePhone } = ctx.userInfo;
-    const needUpdateInfo = ctx.request.body;
-    try {
-      let newUserInfo = await userService.updateUserInfo(mobilePhone, needUpdateInfo);
-      ctx.body = (newUserInfo.code === 1 || 0)
-        ? newUserInfo
-        : { code: 200, msg: "修改成功", token: jwt._createToken(newUserInfo) };
-    } catch(error) {
-      console.log(error);
+router.post('/update', userAuthed, async (ctx) => {
+  const { id } = ctx.user;
+  const updateInfo = ctx.request.body;
+  let user = await findById(id)
+  console.log(user)
+  if (user) {
+    if (updateInfo.phone) {
+      updateInfo.phone = String(updateInfo.phone)
+      let phoneUser = await findByPhone(updateInfo.phone);
+      if (phoneUser) return ctx.error({  message: '该手机号已存在' })  
     }
+    user = await updateUser(id, updateInfo); // 更新用户信息
+    ctx.success(user, '更新成功')
+  } else {
+    ctx.error({ message: '用户不存在' })
   }
 });
 

@@ -1,8 +1,9 @@
 const mobilePhoneModel = require('../models/mobilePhone');
 const UserModel = require('../models/user');
 const mongoose = require('mongoose');
-const sendSMSCode = require('../utils/sms');
+// const sendSMSCode = require('../utils/sms');
 import { md5 } from '../utils/share'
+import { PROJECTION } from '../config/projection'
 
 export function signup(username, pwd, phone, roles) {
   const password = md5(pwd)
@@ -21,6 +22,10 @@ export async function findById(id) {
   return user
 }
 
+export async function findByPhone(phone) {
+  const user = await UserModel.findOne({ phone }).select('+roles +createdAt')
+  return user
+}
 
 export async function signin(phone, password) {
   const user = await UserModel.findOne({ phone }).select('password salt')
@@ -36,8 +41,29 @@ export async function signin(phone, password) {
   }
 }
 
-// “投影” (projection) | 数据库需要返回的数据
-const PROJECTION = { _id: 1, userName: 1, gender: 1, avatar: 1, mobilePhone: 1, email: 1, year: 1, month: 1, day: 1 };
+
+export async function updatePwd(phone, pwd) {
+  const password = md5(pwd)
+  const user = await UserModel.findOneAndUpdate({ phone }, { $set: { password } }, { returnDocument: 'after' })
+  return {
+    isSignin: true,
+    user,
+  }
+}
+
+/**
+ * 更新用户信息
+ * @param {String} phone 用户手机号
+ * @param {Object} updateInfo 需要更新的信息
+ */
+export async function updateUser(_id, updateOpt) {
+  delete updateOpt.password
+  delete updateOpt.id
+  await UserModel.updateOne({ _id }, updateOpt); // 更新用户信息
+  const ret = await UserModel.findById({ _id }, PROJECTION.user); // 查询用户信息并返回所需数据
+  return ret;
+}
+
 
 class userService {
   /**
@@ -159,37 +185,6 @@ class userService {
         }
       }
     } catch (error) {
-      console.log(error);
-    }
-  }
-
-  /**
-   * 更新用户信息
-   * @param {String} mobilePhone 用户手机号
-   * @param {Object} needUpdateInfo 需要更新的信息
-   */
-  async updateUserInfo(mobilePhone, needUpdateInfo) {
-    try {
-      let userDoc = await UserModel.findOne({ mobilePhone });
-      if (userDoc) {
-        if (needUpdateInfo.userName === userDoc.userName) {
-          await UserModel.updateOne({ _id: userDoc._id }, needUpdateInfo); // 更新用户信息
-          const newUserInfo = await UserModel.findById({ _id: userDoc._id }, PROJECTION); // 查询用户信息并返回所需数据
-          return newUserInfo;
-        } else {
-          // 查询是否已存在同用户名
-          let user = await UserModel.findOne({ userName: needUpdateInfo.userName });
-          // 存在，则直接返回
-          if (user) return { code: 1, msg: '用户名已存在' };
-          // 不存在，可更新数据
-          await UserModel.updateOne({ _id: userDoc._id }, needUpdateInfo); // 更新用户信息
-          const newUserInfo = await UserModel.findById({ _id: userDoc._id }, PROJECTION); // 查询用户信息并返回所需数据
-          return newUserInfo;
-        }
-      } else {
-        return { code: 0, msg: '您还未注册账号' };
-      }
-    } catch(error) {
       console.log(error);
     }
   }

@@ -1,8 +1,8 @@
 import { success, error } from '../utils/response'
 
 export default async function json(ctx, next) {
-  ctx.success = (data) => {
-    const result = success(data)
+  ctx.success = (data, msg) => {
+    const result = success(data, msg)
     ctx.body = result
   }
   ctx.error = (data, status) => {
