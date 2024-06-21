@@ -4,7 +4,9 @@
   "description": "兴趣班课时统计",
   "main": "main.js",
   "scripts": {
-    "dev": "nodemon --config ./nodemon.json",
+    "dev": "nodemon --config ./nodemon-dev.json",
+    "start": "nodemon --config ./nodemon.json",
+    "build": "npm run lint & babel src/ --out-dir dist",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix"
   },
