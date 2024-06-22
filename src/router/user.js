@@ -2,6 +2,7 @@ import Router from'koa-router';
 import * as mongodb from 'mongodb'
 import { signup, signin, updatePwd, findById, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
 import { errorCode } from '../config'
+import { savePicCode, findPicCode } from '../service/picCode'
 import userAuthed from '../middleware/userAuthed'
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
@@ -10,22 +11,44 @@ const userService = require('../service/user');
 
 const router = new Router();
 
+const fiveMinutes = 1000 * 60 * 5
+
 /**
  * 用户注册
  */
 router.post('/register', async (ctx) => {
-  const { userName, password, prepassword, phone, picCode, roles = 1 } = ctx.request.body || {};
-  if (!userName || !password || !phone || !picCode) return ctx.body = { code: 4020, msg: '请输入完整信息' };
-  console.log(ctx.captcha, 4)
-  if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
-  if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
+  const { username, password, prepassword, phone, picCode, codeToken, roles = 1 } = ctx.request.body || {};
+  if (!username || !password || !phone || !picCode || !codeToken) {
+    return ctx.error({
+      message: '请输入完整信息',
+    })
+  }
+  const captcha = decode(codeToken)
+  // 防止刷库
+  if (!captcha.id) {
+    return ctx.error({
+      message: '验证码不存在',
+    })
+  }
+  const session = await findPicCode(captcha.id)
+  if (!session || Date.now() - session.time > fiveMinutes) {
+    return ctx.error({
+      message: '验证码已过期',
+    })
+  }
+
+  if (picCode.trim() !== session.code) {
+    return ctx.error({
+      message: '验证码不正确',
+    })
+  }
   if (password !== prepassword) {
     return ctx.error({
       message: '两次密码不同',
     })
   }
   try {
-    const user = await signup(String(userName), String(password), String(phone), roles)
+    const user = await signup(String(username), String(password), String(phone), roles)
     ctx.token = {
       time: Date.now(),
       uid: user.roles,
@@ -74,14 +97,7 @@ router.post('/login', async (ctx) => {
  */
 router.get('/info', userAuthed, async (ctx) => {
   const user = ctx.user
-  ctx.success({
-    user,
-    token: encode({
-      time: Date.now(),
-      uid: user.roles,
-      id: String(user._id),
-    }),
-  })
+  ctx.success(user)
 });
 
 /**
@@ -122,11 +138,18 @@ router.get('/picCode', async (ctx) => {
   let captcha = tools.createCaptcha(4);
   // 将验证码保存入 cookie 中
   const code = captcha.value.toLocaleLowerCase()
-  ctx.captcha = {
-    time: Date.now(),
-    code: code,
-  }
-  ctx.success(captcha.image)
+  const time = Date.now()
+  const uid = 0
+  await savePicCode({ code, time, uid })
+  console.log('图片验证码是：', code)
+  ctx.success({
+    token: encode({
+      time,
+      uid,
+      id: code,
+    }),
+    image: captcha.image
+  })
 });
 
 /**

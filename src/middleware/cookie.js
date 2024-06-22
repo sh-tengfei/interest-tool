@@ -5,7 +5,7 @@ import * as userSv from '../service/user'
 
 
 export default async(ctx, next) => {
-  let cToken = ctx.cookies.get('token') || ctx.query.token || ctx.headers.token || ''
+  let cToken = ctx.cookies.get('authtoken') || ctx.headers.authtoken || ctx.query.authtoken || ''
   // token 还能是个list
   if (Array.isArray(cToken)) {
     cToken = cToken[0]
@@ -17,12 +17,6 @@ export default async(ctx, next) => {
   //   token.id = `${Date.now().toString(36)}-${uuidv4()}`
   // }
   ctx.token = token
-
-  let captcha = ctx.cookies.get('captcha')
-  if (captcha) {
-    ctx.captcha = decode(captcha)
-  }
-
   ctx.userAuthed = async () => {
     if (!mongoose.Types.ObjectId.isValid(token.id)) {
       return false
@@ -41,19 +35,11 @@ export default async(ctx, next) => {
   }
 
   await next()
-  if (ctx.captcha) {
-    console.log(ctx.captcha)
-    ctx.cookies.set('captcha', encode(ctx.captcha), {
-      maxAge: 1000 * 60 * 60 * 12,
-      signed: true,
-      path: '/',
-      // secure: true,
-    })
-  }
+  // 小程序 cookie无效
   // ctx.cookies.set('token', encode(ctx.token), {
   //   maxAge: 1000 * 60 * 60 * 12,
   //   signed: true,
   //   path: '/',
-  //   // secure: true,
+  //   secure: true,
   // })
 }
