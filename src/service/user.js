@@ -170,57 +170,6 @@ class userService {
   }
 
   /**
-   * 用户账号处理：注册 & 登录
-   * @param {Object}
-   * @param {Number} handleFlag 处理标识 1: 登录, 2: 注册
-   */
-  async accountHandle({ userName, password, mobile }, handleFlag = 1) {
-    try {
-      const userDoc = await UserModel.findOne({ mobile });
-      if (!userDoc) {
-        switch (handleFlag) {
-          case 1:
-            return { code: -1, msg: '账号不存在, 可先注册' };
-          case 2:
-            // 查询是否已存在同用户名
-            const user = await UserModel.findOne({ mobile });
-            if (user) return { code: 0, msg: '用户名已存在' };
-            // 注册账号
-            let userEntity = new UserModel({ userName, password, mobile });
-            // 保存到数据库中
-            let userInfo = await userEntity.save();
-            return {
-              code: 200,
-              _id: userInfo._id,
-              userName: userInfo.userName,
-              gender: userInfo.gender,
-              avatar: userInfo.avatar,
-              mobile: Number(userInfo.mobile),
-            };
-        }
-      } else {
-        switch (handleFlag) {
-          case 1:
-            // 登录账号
-            let result = await userDoc.comparePassword(password, userDoc.password); // 进行密码比对是否一致
-            return !result
-              ? { code: -2, msg: '密码不正确' }
-              : {
-                  code: 200,
-                  _id: userDoc._id,
-                  nickname: userDoc.userName,
-                  mobile: Number(userInfo.mobile),
-                };
-          case 2:
-            return (userDoc.mobile === mobile) && { code: 1, msg: '账号已存在, 可直接登录' };
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  /**
    * 查询商品是否已收藏
    * @param {String} userId 用户 Id
    * @param {String} goodsId 商品 Id

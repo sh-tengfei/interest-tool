@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 
 // 图片验证
-const picCodeSchema = new Schema({
+const PicCodeSchema = new Schema({
   code: {
     required: true,
     dropDups: true,
@@ -24,4 +24,4 @@ const picCodeSchema = new Schema({
   autoIndex: true,
 });
 
-export default mongoose.model('PicCode', picCodeSchema);
+export default mongoose.model('PicCode', PicCodeSchema);
