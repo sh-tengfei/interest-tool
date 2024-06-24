@@ -64,6 +64,8 @@ router.post('/register', async (ctx) => {
         }
       })
       return ctx.error({ data: errors, message: '手机号已注册！' })
+    } else {
+      console.log(e, 'etf e')
     }
   }
 });
@@ -104,21 +106,31 @@ router.get('/info', userAuthed, async (ctx) => {
  * 忘记密码找回
  */
 router.post('/resetPwd', async (ctx) => {
-  let { phone, password, prePassword, picCode } = ctx.request.body;
-  if (!phone || !password || !phone || !picCode || !prePassword) return ctx.body = { code: 4020, msg: '请输入完整信息' };
-  if (!ctx.session.picCode) return ctx.body = { code: 5010, msg: '验证码已过期' };
-  if (ctx.session.picCode !== picCode.toLocaleLowerCase()) return ctx.body = { code: 5020, msg: '验证码不正确' };
-  let user = await updatePwd(String(phone), String(password));
-  ctx.token = {
-    time: Date.now(),
-    uid: user.roles,
-    id: String(user._id),
-  }
-  ctx.success(user, '重置成功')
+  let { phone, password, prePassword, picCode, codeToken } = ctx.request.body;
+  if (!phone || !password || !picCode || !prePassword) return ctx.body = { code: 4020, msg: '请输入完整信息' };
+  const captcha = decode(codeToken)
+  // 防止刷库
+  if (!captcha.id) return ctx.error({ message: '验证码不存在' })
+  const session = await findPicCode(captcha.id)
+  if (!session || Date.now() - session.time > fiveMinutes) return ctx.error({ message: '验证码已过期' })
+  if (picCode.trim() !== session.code) return ctx.error({ message: '验证码不正确' })
+  let user = await updatePwd(String(phone), String(password))
+  let result = { phone: user.phone, id: user._id }
+  ctx.success(result, '重置成功')
 });
 
 /**
- * 忘记密码找回
+ * 修改密码
+ */
+router.post('/changePwd', userAuthed, async (ctx) => {
+  let { password, prePassword } = ctx.request.body;
+  if (password !== prePassword) return ctx.error({ message: '两次密码不同' })
+  let user = await updatePwd(String(ctx.user.phone), String(password))
+  ctx.success(user, '修改成功')
+});
+
+/**
+ * 获取微信解密信息
  */
 router.post('/getWxPhone', async (ctx) => {
   let { code, encryptedData, iv } = ctx.request.body;

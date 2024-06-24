@@ -1,6 +1,6 @@
 import axios from 'axios'
 const mobilePhoneModel = require('../models/mobilePhone');
-const UserModel = require('../models/user');
+import UserModel from '../models/user';
 const mongoose = require('mongoose');
 // const sendSMSCode = require('../utils/sms');
 import { md5 } from '../utils/share'
@@ -48,10 +48,7 @@ export async function signin(phone, password) {
 export async function updatePwd(phone, pwd) {
   const password = md5(pwd)
   const user = await UserModel.findOneAndUpdate({ phone }, { $set: { password } }, { returnDocument: 'after' })
-  return {
-    isSignin: true,
-    user,
-  }
+  return user
 }
 
 export async function getWxEncryptedData (code, encryptedData, iv) {
