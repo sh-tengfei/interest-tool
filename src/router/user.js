@@ -5,14 +5,18 @@ import { errorCode } from '../config'
 import { savePicCode, findPicCode } from '../service/picCode'
 import { jscode2session } from '../service/weixin'
 import userAuthed from '../middleware/userAuthed'
-const checkUserStat = require('../middleware/checkUserStat');
+import checkUserStat from '../middleware/checkUserStat'
 const tools = require('../utils/tools');
 const { encode, decode } = require('../utils/token');
 const userService = require('../service/user');
 
 const router = new Router();
-
 const fiveMinutes = 1000 * 60 * 5
+// 登录类型
+const LoginTypes = {
+  phone: 1,
+  wx: 2
+}
 
 /**
  * 用户注册
@@ -75,58 +79,42 @@ router.post('/register', async (ctx) => {
  * 用户登录
  */
 router.post('/login', async (ctx) => {
-  let { phone, password } = ctx.request.body || {};
-
-  const result = await signin(String(phone), String(password))
-  if (!result.isSignin || result.user === null) {
-    return ctx.error({
-      message: '用户不存在或密码错误',
-    })
+  let { phone, password, code, logintype = 1 } = ctx.request.body || {};
+  let user = null
+  if(logintype === LoginTypes.wx) {
+    if (!code) return ctx.error({ message: '请输入完整信息' })
+    const { data } = await jscode2session(code)
+    if (data.errmsg) {
+      return ctx.error({ message: data.errmsg })
+    }
+    let ret = await findByOpenId(data.openid)
+    if (!ret) {
+      user = await signupWX({ ...data , roles: 0 })
+    } else {
+      user = ret
+    }
   }
-
-  ctx.token = {
-    time: Date.now(),
-    uid: result.user.roles,
-    id: String(result.user._id),
+  if (logintype === LoginTypes.phone) {
+    if (!phone || !password) return ctx.error({ message: '请输入完整信息' })
+    const result = await signin(String(phone), String(password))
+    if (!result.isSignin || result.user === null) {
+      return ctx.error({
+        message: '用户不存在或密码错误',
+      })
+    }
+    user = result.user
   }
-
-  ctx.success({
-    token: encode(ctx.token),
-  })
-});
-
-
-/**
- * 用户登录
- */
-router.post('/wxLogin', async (ctx) => {
-  let { code } = ctx.request.body || {};
-  if (!code) {
-    return ctx.error({
-      message: '请输入完整信息',
-    })
-  }
-  const { data } = await jscode2session(code)
-  if (data.errmsg) {
-    return ctx.error({
-      message: data.errmsg,
-    })
-  }
-
-  let user = await findByOpenId(data.openid)
-  if (!user) {
-    user = await signupWX({ ...data , roles: 0 })
-  }
-
   ctx.token = {
     time: Date.now(),
     uid: user.roles,
     id: String(user._id),
   }
+
   ctx.success({
     token: encode(ctx.token),
   })
 });
+
 
 /**
  * 获取用户信息
