@@ -8,9 +8,16 @@ import { PROJECTION } from '../config/projection'
 import { appId, wxSecret } from '../config'
 import WXBizDataCrypt from '../lib/WXBizDataCrypt'
 
-export function signup(username, pwd, phone, roles) {
-  const password = md5(pwd)
+export function signupWX({ openid, unionid, roles }) {
+  const newUser = new UserModel({
+    openid,
+    unionid,
+    roles,
+  })
+  return newUser.save()
+}
 
+export function signup(username, pwd, phone, roles) {
   const newUser = new UserModel({
     username,
     password,
@@ -22,6 +29,11 @@ export function signup(username, pwd, phone, roles) {
 
 export async function findById(id) {
   const user = await UserModel.findById(id).select('+roles +createdAt')
+  return user
+}
+
+export async function findByOpenId(openid) {
+  const user = await UserModel.findOne({ openid }).select('+roles +createdAt')
   return user
 }
 

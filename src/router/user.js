@@ -1,8 +1,9 @@
 import Router from'koa-router';
 import * as mongodb from 'mongodb'
-import { signup, signin, updatePwd, findById, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
+import { signupWX, signup, signin, updatePwd, findById, findByOpenId, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
 import { errorCode } from '../config'
 import { savePicCode, findPicCode } from '../service/picCode'
+import { jscode2session } from '../service/weixin'
 import userAuthed from '../middleware/userAuthed'
 const checkUserStat = require('../middleware/checkUserStat');
 const tools = require('../utils/tools');
@@ -89,6 +90,39 @@ router.post('/login', async (ctx) => {
     id: String(result.user._id),
   }
 
+  ctx.success({
+    token: encode(ctx.token),
+  })
+});
+
+
+/**
+ * 用户登录
+ */
+router.post('/wxLogin', async (ctx) => {
+  let { code } = ctx.request.body || {};
+  if (!code) {
+    return ctx.error({
+      message: '请输入完整信息',
+    })
+  }
+  const { data } = await jscode2session(code)
+  if (data.errmsg) {
+    return ctx.error({
+      message: data.errmsg,
+    })
+  }
+
+  let user = await findByOpenId(data.openid)
+  if (!user) {
+    user = await signupWX({ ...data , roles: 0 })
+  }
+
+  ctx.token = {
+    time: Date.now(),
+    uid: user.roles,
+    id: String(user._id),
+  }
   ctx.success({
     token: encode(ctx.token),
   })
