@@ -7,7 +7,7 @@
     ],
     "verbose": true,
     "colours": true,
-    "exec": "npm run lint & node dist/main.js",
+    "exec": "npm run lint & babel-node src/main.js",
     "execMap": {
       "js": "node --harmony"
     },
