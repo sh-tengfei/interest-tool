@@ -58,7 +58,7 @@ function signupWX(_ref) {
 function signup(username, pwd, phone, roles) {
   var newUser = new _user2.default({
     username: username,
-    password: password,
+    password: (0, _share.md5)(pwd),
     roles: roles,
     phone: phone
   });
