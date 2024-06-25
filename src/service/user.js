@@ -20,7 +20,7 @@ export function signupWX({ openid, unionid, roles }) {
 export function signup(username, pwd, phone, roles) {
   const newUser = new UserModel({
     username,
-    password,
+    password: md5(pwd),
     roles,
     phone,
   })
