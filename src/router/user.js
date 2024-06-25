@@ -22,10 +22,15 @@ const LoginTypes = {
  * 用户注册
  */
 router.post('/register', async (ctx) => {
-  const { username, password, prepassword, phone, picCode, codeToken, roles = 1 } = ctx.request.body || {};
-  if (!username || !password || !phone || !picCode || !codeToken) {
+  const { password, prepassword, phone, picCode, codeToken, roles = 1 } = ctx.request.body || {};
+  if (!password || !phone || !picCode || !codeToken) {
     return ctx.error({
       message: '请输入完整信息',
+    })
+  }
+  if (String(phone).length !== 11) {
+    return ctx.error({
+      message: '请输入正确信息',
     })
   }
   const captcha = decode(codeToken)
@@ -53,7 +58,7 @@ router.post('/register', async (ctx) => {
     })
   }
   try {
-    const user = await signup(String(username), String(password), String(phone), roles)
+    const user = await signup(String(password), String(phone), roles)
     ctx.token = {
       time: Date.now(),
       uid: user.roles,
@@ -112,7 +117,7 @@ router.post('/login', async (ctx) => {
 
   ctx.success({
     token: encode(ctx.token),
-  })
+  }, '登录成功')
 });
 
 

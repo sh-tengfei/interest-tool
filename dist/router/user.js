@@ -55,7 +55,6 @@ var LoginTypes = {
    */
 };router.post('/register', async function (ctx) {
   var _ref = ctx.request.body || {},
-      username = _ref.username,
       password = _ref.password,
       prepassword = _ref.prepassword,
       phone = _ref.phone,
@@ -64,9 +63,14 @@ var LoginTypes = {
       _ref$roles = _ref.roles,
       roles = _ref$roles === undefined ? 1 : _ref$roles;
 
-  if (!username || !password || !phone || !picCode || !codeToken) {
+  if (!password || !phone || !picCode || !codeToken) {
     return ctx.error({
       message: '请输入完整信息'
+    });
+  }
+  if (String(phone).length !== 11) {
+    return ctx.error({
+      message: '请输入正确信息'
     });
   }
   var captcha = decode(codeToken);
@@ -94,7 +98,7 @@ var LoginTypes = {
     });
   }
   try {
-    var _user = await (0, _user2.signup)(String(username), String(password), String(phone), roles);
+    var _user = await (0, _user2.signup)(String(password), String(phone), roles);
     ctx.token = {
       time: Date.now(),
       uid: _user.roles,
@@ -162,7 +166,7 @@ router.post('/login', async function (ctx) {
 
   ctx.success({
     token: encode(ctx.token)
-  });
+  }, '登录成功');
 });
 
 /**
