@@ -34,6 +34,11 @@ var wxSecrets = {
   production: 'f766f651561758b613e56fafb5c87d21'
 };
 
+var BASE_URLS = {
+  development: '/api',
+  production: ''
+};
+
 var dbUrl = exports.dbUrl = dbBaseUrls[NODE_ENV];
 var port = exports.port = ports[NODE_ENV];
 var env = exports.env = NODE_ENV;
@@ -41,6 +46,7 @@ var secret = exports.secret = secrets[NODE_ENV];
 var keys = exports.keys = keyss[NODE_ENV];
 var appId = exports.appId = appIds[NODE_ENV];
 var wxSecret = exports.wxSecret = wxSecrets[NODE_ENV];
+var BASE_URL = exports.BASE_URL = BASE_URLS[NODE_ENV];
 
 var errorCode = exports.errorCode = {
   exists: 11000

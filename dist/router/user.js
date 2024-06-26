@@ -165,7 +165,8 @@ router.post('/login', async function (ctx) {
   };
 
   ctx.success({
-    token: encode(ctx.token)
+    token: encode(ctx.token),
+    user: user
   }, '登录成功');
 });
 
@@ -462,5 +463,5 @@ router.post('/commentDetails', _checkUserStat2.default, async function (ctx) {
   }
 });
 
-var path = exports.path = '/user';
+var path = exports.path = _config.BASE_URL + '/user';
 exports.default = router;
