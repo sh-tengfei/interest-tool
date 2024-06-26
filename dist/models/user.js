@@ -30,7 +30,7 @@ var User = new Schema({
   gender: { type: String }, // 性别
   avatar: { type: String, default: 'http://gips0.baidu.com/it/u=3602773692,1512483864&fm=3028&app=3028&f=JPEG&fmt=auto?w=960&h=1280' }, // 头像
   openid: { type: String, index: true },
-  unionid: { type: String, unique: true }
+  unionid: { type: String }
 }, {
   timestamps: true,
   versionKey: false,
