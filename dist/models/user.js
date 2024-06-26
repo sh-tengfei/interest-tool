@@ -8,6 +8,8 @@ var _mongoose = require('mongoose');
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
+var _config = require('../config');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Schema = _mongoose2.default.Schema;
@@ -19,19 +21,24 @@ var User = new Schema({
     minlength: 11,
     maxlength: 11,
     type: String,
-    index: true,
-    unique: true
+    index: true
   }, // 手机号
   password: {
     type: String,
     select: false,
     minlength: 6
   },
-  username: { type: String, default: null }, // 用户昵称
-  gender: { type: String, default: null }, // 性别
-  avatar: { type: String, default: 'http://gips0.baidu.com/it/u=3602773692,1512483864&fm=3028&app=3028&f=JPEG&fmt=auto?w=960&h=1280' }, // 头像
-  openid: { type: String, unique: true, index: true },
-  unionid: { type: String, unique: true }
+
+  // 微信信息
+  city: { type: String },
+  country: { type: String },
+  gender: { type: String }, // 性别
+  language: { type: String },
+  province: { type: String },
+  username: { type: String }, // 用户昵称
+  avatar: { type: String, default: _config.defaultAvatar }, // 头像
+  openid: { type: String, index: true, dropDups: true },
+  unionid: { type: String }
 }, {
   timestamps: true,
   versionKey: false,

@@ -7,10 +7,12 @@ export function savePicCode(opt) {
 
 export async function findPicCode(code) {
   const picCode = await PicCodeModel.findOne({ code })
-  await PicCodeModel.deleteOne({ code })
   return picCode
 }
 
+export async function delPicCode(code) {
+  return await PicCodeModel.deleteOne({ code })
+}
 
 export async function removePicCode(code) {
   const picCode = await PicCodeModel.removeOne({ code })

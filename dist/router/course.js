@@ -28,14 +28,30 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var router = new _koaRouter2.default();
 
 /**
- * 用户注册
+ * 创建课程
  */
-router.get('/interest-list', _userAuthed2.default, async function (ctx) {
+router.post('/create', _userAuthed2.default, async function (ctx) {
   var id = ctx.user.id;
 
-  var courseList = await (0, _course.getCourseList)(id);
-  ctx.success({ courseList: courseList }, '');
+  var _ref = ctx.request.body || {},
+      courseType = _ref.courseType,
+      courseName = _ref.courseName;
+
+  if (!courseType || !courseName) {
+    return ctx.error({
+      message: '请输入正确信息'
+    });
+  }
+  try {
+    var course = await (0, _course.newCourse)(id, courseType, courseName);
+    ctx.success(course, '创建成功');
+  } catch (error) {
+    console.log(error);
+    return ctx.error({
+      message: '系统错误'
+    });
+  }
 });
 
-var path = exports.path = _config.BASE_URL + '/home';
+var path = exports.path = _config.BASE_URL + '/course';
 exports.default = router;

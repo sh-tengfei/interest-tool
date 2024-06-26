@@ -37,6 +37,11 @@ const defaultAvatars = {
   production: 'http://gips0.baidu.com/it/u=3602773692,1512483864&fm=3028&app=3028&f=JPEG&fmt=auto?w=960&h=1280',
 }
 
+const BASE_URLS = {
+  development: '/api',
+  production: '',
+}
+
 export const dbUrl = dbBaseUrls[NODE_ENV]
 export const port = ports[NODE_ENV]
 export const env = NODE_ENV
@@ -45,6 +50,7 @@ export const keys = keyss[NODE_ENV]
 export const appId = appIds[NODE_ENV]
 export const wxSecret = wxSecrets[NODE_ENV]
 export const defaultAvatar = defaultAvatars[NODE_ENV]
+export const BASE_URL = BASE_URLS[NODE_ENV]
 
 export const errorCode = {
   exists: 11000

@@ -11,13 +11,7 @@ var _koaRouter = require('koa-router');
 
 var _koaRouter2 = _interopRequireDefault(_koaRouter);
 
-var _mongodb = require('mongodb');
-
-var mongodb = _interopRequireWildcard(_mongodb);
-
-var _user2 = require('../service/user');
-
-var _config = require('../config');
+var _user = require('../service/user');
 
 var _picCode = require('../service/picCode');
 
@@ -27,19 +21,13 @@ var _userAuthed = require('../middleware/userAuthed');
 
 var _userAuthed2 = _interopRequireDefault(_userAuthed);
 
-var _checkUserStat = require('../middleware/checkUserStat');
+var _config = require('../config');
 
-var _checkUserStat2 = _interopRequireDefault(_checkUserStat);
+var _tools = require('../utils/tools');
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _token = require('../utils/token');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var tools = require('../utils/tools');
-
-var _require = require('../utils/token'),
-    encode = _require.encode,
-    decode = _require.decode;
 
 var userService = require('../service/user');
 
@@ -73,23 +61,11 @@ var LoginTypes = {
       message: '请输入正确信息'
     });
   }
-  var captcha = decode(codeToken);
+  var captcha = (0, _token.decode)(codeToken);
   // 防止刷库
   if (!captcha.id) {
     return ctx.error({
-      message: '验证码不存在'
-    });
-  }
-  var session = await (0, _picCode.findPicCode)(captcha.id);
-  if (!session || Date.now() - session.time > fiveMinutes) {
-    return ctx.error({
       message: '验证码已过期'
-    });
-  }
-
-  if (picCode.trim() !== session.code) {
-    return ctx.error({
-      message: '验证码不正确'
     });
   }
   if (password !== prepassword) {
@@ -97,27 +73,32 @@ var LoginTypes = {
       message: '两次密码不同'
     });
   }
-  try {
-    var _user = await (0, _user2.signup)(String(password), String(phone), roles);
-    ctx.token = {
-      time: Date.now(),
-      uid: _user.roles,
-      id: String(_user._id)
-    };
-    ctx.success(_user, '注册成功');
-  } catch (e) {
-    if (e instanceof mongodb.MongoServerError && e.code === _config.errorCode.exists) {
-      var errors = Object.keys(e.keyValue).map(function (key) {
-        return {
-          field: key,
-          msg: 'exists'
-        };
-      });
-      return ctx.error({ data: errors, message: '手机号已注册！' });
-    } else {
-      console.log(e, 'etf e');
-    }
+  var session = await (0, _picCode.findPicCode)(captcha.id);
+  if (!session || Date.now() - session.time > fiveMinutes) {
+    await (0, _picCode.delPicCode)(captcha.id);
+    return ctx.error({
+      message: '验证码已过期',
+      code: 202
+    });
   }
+
+  if (picCode.trim() !== session.code) {
+    return ctx.error({ message: '验证码不正确' });
+  }
+  await (0, _picCode.delPicCode)(captcha.id);
+  var existPhone = await (0, _user.findByPhone)(String(phone));
+  if (existPhone) {
+    return ctx.error({ message: '手机号已注册！' });
+  }
+  var user = await (0, _user.signup)(String(password), String(phone), roles);
+  ctx.success({
+    token: (0, _token.encode)({
+      time: Date.now(),
+      uid: user.roles,
+      id: String(user._id)
+    }),
+    user: user
+  }, '注册成功');
 });
 
 /**
@@ -141,16 +122,16 @@ router.post('/login', async function (ctx) {
     if (data.errmsg) {
       return ctx.error({ message: data.errmsg });
     }
-    var ret = await (0, _user2.findByOpenId)(data.openid);
+    var ret = await (0, _user.findByOpenId)(data.openid);
     if (!ret) {
-      user = await (0, _user2.signupWX)(_extends({}, data, { roles: 0 }));
+      user = await (0, _user.signupWx)(_extends({}, data, { roles: 0 }));
     } else {
       user = ret;
     }
   }
   if (logintype === LoginTypes.phone) {
     if (!phone || !password) return ctx.error({ message: '请输入完整信息' });
-    var result = await (0, _user2.signin)(String(phone), String(password));
+    var result = await (0, _user.signin)(String(phone), String(password));
     if (!result.isSignin || result.user === null) {
       return ctx.error({
         message: '用户不存在或密码错误'
@@ -158,14 +139,13 @@ router.post('/login', async function (ctx) {
     }
     user = result.user;
   }
-  ctx.token = {
-    time: Date.now(),
-    uid: user.roles,
-    id: String(user._id)
-  };
-
   ctx.success({
-    token: encode(ctx.token)
+    token: (0, _token.encode)({
+      time: Date.now(),
+      uid: user.roles,
+      id: String(user._id)
+    }),
+    user: user
   }, '登录成功');
 });
 
@@ -189,15 +169,37 @@ router.post('/resetPwd', async function (ctx) {
       codeToken = _ctx$request$body.codeToken;
 
   if (!phone || !password || !picCode || !prePassword) return ctx.body = { code: 4020, msg: '请输入完整信息' };
-  var captcha = decode(codeToken);
+  var captcha = (0, _token.decode)(codeToken);
   // 防止刷库
   if (!captcha.id) return ctx.error({ message: '验证码不存在' });
   var session = await (0, _picCode.findPicCode)(captcha.id);
   if (!session || Date.now() - session.time > fiveMinutes) return ctx.error({ message: '验证码已过期' });
   if (picCode.trim() !== session.code) return ctx.error({ message: '验证码不正确' });
-  var user = await (0, _user2.updatePwd)(String(phone), String(password));
+  var user = await (0, _user.updatePwd)(String(phone), String(password));
   var result = { phone: user.phone, id: user._id };
   ctx.success(result, '重置成功');
+});
+
+/**
+ * 发送图片验证码
+ */
+router.get('/picCode', async function (ctx) {
+  var captcha = (0, _tools.createCaptcha)(4);
+  // 将验证码保存入 cookie 中
+  var code = captcha.value.toLocaleLowerCase();
+  var time = Date.now();
+  var uid = 0;
+  await (0, _picCode.savePicCode)({ code: code, time: time, uid: uid });
+  console.log('图片验证码是：', code);
+  ctx.success({
+    token: (0, _token.encode)({
+      time: time,
+      uid: uid,
+      id: code
+    }),
+    image: captcha.image,
+    code: code
+  });
 });
 
 /**
@@ -207,49 +209,41 @@ router.post('/changePwd', _userAuthed2.default, async function (ctx) {
   var _ctx$request$body2 = ctx.request.body,
       password = _ctx$request$body2.password,
       prePassword = _ctx$request$body2.prePassword;
+  var id = ctx.user.id;
 
   if (password !== prePassword) return ctx.error({ message: '两次密码不同' });
-  var user = await (0, _user2.updatePwd)(String(ctx.user.phone), String(password));
+  var user = await (0, _user.findById)(ctx.user.id);
+  if (!user || !user.phone) return ctx.error({ message: '用户不存在或不是账号登录' });
+  var result = await (0, _user.updatePwd)(user.phone, String(password));
+  console.log(result, user);
+  if (!user) return ctx.error({ message: '用户不存在' });
   ctx.success(user, '修改成功');
 });
 
 /**
  * 获取微信解密信息
  */
-router.post('/getWxPhone', async function (ctx) {
+router.post('/getEncrypted', _userAuthed2.default, async function (ctx) {
+  var id = ctx.user.id;
   var _ctx$request$body3 = ctx.request.body,
       code = _ctx$request$body3.code,
       encryptedData = _ctx$request$body3.encryptedData,
       iv = _ctx$request$body3.iv;
 
-  var user = await (0, _user2.getWxEncryptedData)(code, encryptedData, iv);
-  ctx.token = {
-    time: Date.now(),
-    uid: user.roles,
-    id: String(user._id)
-  };
-  ctx.success(user, '重置成功');
-});
-
-/**
- * 发送图片验证码
- */
-router.get('/picCode', async function (ctx) {
-  var captcha = tools.createCaptcha(4);
-  // 将验证码保存入 cookie 中
-  var code = captcha.value.toLocaleLowerCase();
-  var time = Date.now();
-  var uid = 0;
-  await (0, _picCode.savePicCode)({ code: code, time: time, uid: uid });
-  console.log('图片验证码是：', code);
-  ctx.success({
-    token: encode({
-      time: time,
-      uid: uid,
-      id: code
-    }),
-    image: captcha.image
-  });
+  var r = await (0, _tools.getWxEncrypted)(code, encryptedData, iv);
+  if (!r.openId) {
+    return ctx.error({ message: '解密失败' });
+  }
+  var user = await (0, _user.updateUser)(id, {
+    avatar: r.avatarUrl,
+    city: r.city,
+    country: r.country,
+    gender: r.gender,
+    language: r.language,
+    username: r.nickName,
+    province: r.province
+  }); // 更新用户信息
+  ctx.success(user, '更新成功');
 });
 
 /**
@@ -262,10 +256,10 @@ router.post('/update', _userAuthed2.default, async function (ctx) {
   if (user) {
     if (updateInfo.phone) {
       updateInfo.phone = String(updateInfo.phone);
-      var phoneUser = await (0, _user2.findByPhone)(updateInfo.phone);
+      var phoneUser = await (0, _user.findByPhone)(updateInfo.phone);
       if (phoneUser) return ctx.error({ message: '该手机号已存在' });
     }
-    user = await (0, _user2.updateUser)(id, updateInfo); // 更新用户信息
+    user = await (0, _user.updateUser)(id, updateInfo); // 更新用户信息
     ctx.success(user, '更新成功');
   } else {
     ctx.error({ message: '用户不存在' });
@@ -297,170 +291,5 @@ router.post('/sendSMSCode', async function (ctx) {
   }
 });
 
-/**
- * 查询商品是否已收藏
- */
-router.post('/queryCollection', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    var goodsId = ctx.request.body.goodsId;
-
-    try {
-      var queryResut = await userService.queryCollection(userId, goodsId);
-      ctx.body = _extends({ code: 200 }, queryResut);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 获取用户已收藏的商品列表
- */
-router.get('/collectionList', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    var page = parseInt(ctx.request.query.page) || 1;
-    var pageSize = 10; // 数据条数
-    var skip = (page - 1) * pageSize; // 跳过的数据条数 (分页的公式)
-    var options = { userId: userId, page: page, pageSize: pageSize, skip: skip }; // 整合选项
-
-    try {
-      var result = await userService.getCollectionList(options);
-      ctx.body = result;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 查询购物车数据
- */
-router.get('/checkShopCart', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    try {
-      var result = await userService.checkShopCart(userId);
-      ctx.body = result;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 获取地址列表
- */
-router.get('/addressList', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    try {
-      var result = await userService.getAddressList(userId);
-      ctx.body = result;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 获取默认地址
- */
-router.get('/defAddress', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    try {
-      var result = await userService.getDefAddress(userId);
-      ctx.body = result;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 获取订单列表
- */
-router.get('/orderList', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-    try {
-      var result = await userService.getOrderList(userId);
-      ctx.body = result;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 获取订单对应处理数量
- */
-router.get('/orderNum', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-
-    try {
-      var result = await userService.getOrderNum(userId);
-      ctx.body = {
-        code: 200,
-        orderNum: result
-      };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 查询待评论商品列表
- */
-router.get('/waitCommentList', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-
-    try {
-      var result = await userService.queryWaitCommentList(userId);
-      ctx.body = { code: 200, waitCommentList: result };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 查询已评论商品列表
- */
-router.get('/alreadyCommentList', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var userId = ctx.userInfo._id; // 取用户 id
-
-    try {
-      var result = await userService.queryAlreadyCommentList(userId);
-      ctx.body = { code: 200, alreadyCommentList: result };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-/**
- * 查询评价详情
- */
-router.post('/commentDetails', _checkUserStat2.default, async function (ctx) {
-  if (ctx.userInfo) {
-    var commentId = ctx.request.body.commentId;
-
-
-    try {
-      var result = await userService.queryCommentDetails(commentId);
-      ctx.body = { code: 200, commentDetails: result };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-});
-
-var path = exports.path = '/user';
+var path = exports.path = _config.BASE_URL + '/user';
 exports.default = router;

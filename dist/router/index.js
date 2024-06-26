@@ -17,11 +17,16 @@ var _home = require('./home');
 
 var _home2 = _interopRequireDefault(_home);
 
+var _course = require('./course');
+
+var _course2 = _interopRequireDefault(_course);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var router = new _koaRouter2.default();
 router.use(_user.path, _user2.default.routes());
 router.use(_home.path, _home2.default.routes());
+router.use(_course.path, _course2.default.routes());
 
 function init(app) {
   app.use(router.routes());

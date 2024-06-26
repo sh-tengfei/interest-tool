@@ -1,5 +1,3 @@
-// const RecommendModel = require('../models/recommend');
-// const GoodsModel = require('../models/goods');
 import axios from 'axios'
 import { appId, wxSecret } from '../config'
 
