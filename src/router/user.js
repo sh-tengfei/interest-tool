@@ -37,7 +37,7 @@ router.post('/register', async (ctx) => {
   // 防止刷库
   if (!captcha.id) {
     return ctx.error({
-      message: '验证码不存在',
+      message: '验证码已过期',
     })
   }
   const session = await findPicCode(captcha.id)
