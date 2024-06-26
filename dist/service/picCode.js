@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.savePicCode = savePicCode;
 exports.findPicCode = findPicCode;
+exports.delPicCode = delPicCode;
 exports.removePicCode = removePicCode;
 
 var _picCode = require('../models/picCode');
@@ -20,8 +21,11 @@ function savePicCode(opt) {
 
 async function findPicCode(code) {
   var picCode = await _picCode2.default.findOne({ code: code });
-  await _picCode2.default.deleteOne({ code: code });
   return picCode;
+}
+
+async function delPicCode(code) {
+  return await _picCode2.default.deleteOne({ code: code });
 }
 
 async function removePicCode(code) {

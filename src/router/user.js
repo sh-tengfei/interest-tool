@@ -1,8 +1,8 @@
 import Router from'koa-router';
-import * as mongodb from 'mongodb'
-import { signupWX, signup, signin, updatePwd, findById, findByOpenId, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
-import { errorCode } from '../config'
-import { savePicCode, findPicCode } from '../service/picCode'
+// import * as mongodb from 'mongodb'
+import { signupWX, signup, signin, updatePwd, findByOpenId, findByPhone, updateUser, getWxEncryptedData } from '../service/user'
+// import { errorCode } from '../config'
+import { savePicCode, findPicCode, delPicCode } from '../service/picCode'
 import { jscode2session } from '../service/weixin'
 import userAuthed from '../middleware/userAuthed'
 import checkUserStat from '../middleware/checkUserStat'
@@ -41,10 +41,17 @@ router.post('/register', async (ctx) => {
       message: '验证码不存在',
     })
   }
+  if (password !== prepassword) {
+    return ctx.error({
+      message: '两次密码不同',
+    })
+  }
   const session = await findPicCode(captcha.id)
   if (!session || Date.now() - session.time > fiveMinutes) {
+    await delPicCode(captcha.id)
     return ctx.error({
       message: '验证码已过期',
+      code: 202
     })
   }
 
@@ -53,32 +60,18 @@ router.post('/register', async (ctx) => {
       message: '验证码不正确',
     })
   }
-  if (password !== prepassword) {
-    return ctx.error({
-      message: '两次密码不同',
-    })
+  await delPicCode(captcha.id)
+  const existPhone = await findByPhone(String(phone));
+  if (existPhone) {
+    return ctx.error({ message: '手机号已注册！' })
   }
-  try {
-    const user = await signup(String(password), String(phone), roles)
-    ctx.token = {
-      time: Date.now(),
-      uid: user.roles,
-      id: String(user._id),
-    }
-    ctx.success(user, '注册成功')
-  } catch (e) {
-    if (e instanceof mongodb.MongoServerError && e.code === errorCode.exists) {
-      const errors = Object.keys(e.keyValue).map((key) => {
-        return {
-          field: key,
-          msg: 'exists',
-        }
-      })
-      return ctx.error({ data: errors, message: '手机号已注册！' })
-    } else {
-      console.log(e, 'etf e')
-    }
+  const user = await signup(String(password), String(phone), roles)
+  ctx.token = {
+    time: Date.now(),
+    uid: user.roles,
+    id: String(user._id),
   }
+  ctx.success(user, '注册成功')
 });
 
 /**

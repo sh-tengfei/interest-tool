@@ -6,18 +6,16 @@ Object.defineProperty(exports, "__esModule", {
 exports.path = undefined;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+// import * as mongodb from 'mongodb'
+
+// import { errorCode } from '../config'
+
 
 var _koaRouter = require('koa-router');
 
 var _koaRouter2 = _interopRequireDefault(_koaRouter);
 
-var _mongodb = require('mongodb');
-
-var mongodb = _interopRequireWildcard(_mongodb);
-
-var _user2 = require('../service/user');
-
-var _config = require('../config');
+var _user = require('../service/user');
 
 var _picCode = require('../service/picCode');
 
@@ -31,7 +29,7 @@ var _checkUserStat = require('../middleware/checkUserStat');
 
 var _checkUserStat2 = _interopRequireDefault(_checkUserStat);
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+var _config = require('../config');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -80,10 +78,17 @@ var LoginTypes = {
       message: '验证码不存在'
     });
   }
+  if (password !== prepassword) {
+    return ctx.error({
+      message: '两次密码不同'
+    });
+  }
   var session = await (0, _picCode.findPicCode)(captcha.id);
   if (!session || Date.now() - session.time > fiveMinutes) {
+    await (0, _picCode.delPicCode)(captcha.id);
     return ctx.error({
-      message: '验证码已过期'
+      message: '验证码已过期',
+      code: 202
     });
   }
 
@@ -92,32 +97,18 @@ var LoginTypes = {
       message: '验证码不正确'
     });
   }
-  if (password !== prepassword) {
-    return ctx.error({
-      message: '两次密码不同'
-    });
+  await (0, _picCode.delPicCode)(captcha.id);
+  var existPhone = await (0, _user.findByPhone)(String(phone));
+  if (existPhone) {
+    return ctx.error({ message: '手机号已注册！' });
   }
-  try {
-    var _user = await (0, _user2.signup)(String(password), String(phone), roles);
-    ctx.token = {
-      time: Date.now(),
-      uid: _user.roles,
-      id: String(_user._id)
-    };
-    ctx.success(_user, '注册成功');
-  } catch (e) {
-    if (e instanceof mongodb.MongoServerError && e.code === _config.errorCode.exists) {
-      var errors = Object.keys(e.keyValue).map(function (key) {
-        return {
-          field: key,
-          msg: 'exists'
-        };
-      });
-      return ctx.error({ data: errors, message: '手机号已注册！' });
-    } else {
-      console.log(e, 'etf e');
-    }
-  }
+  var user = await (0, _user.signup)(String(password), String(phone), roles);
+  ctx.token = {
+    time: Date.now(),
+    uid: user.roles,
+    id: String(user._id)
+  };
+  ctx.success(user, '注册成功');
 });
 
 /**
@@ -141,16 +132,16 @@ router.post('/login', async function (ctx) {
     if (data.errmsg) {
       return ctx.error({ message: data.errmsg });
     }
-    var ret = await (0, _user2.findByOpenId)(data.openid);
+    var ret = await (0, _user.findByOpenId)(data.openid);
     if (!ret) {
-      user = await (0, _user2.signupWX)(_extends({}, data, { roles: 0 }));
+      user = await (0, _user.signupWX)(_extends({}, data, { roles: 0 }));
     } else {
       user = ret;
     }
   }
   if (logintype === LoginTypes.phone) {
     if (!phone || !password) return ctx.error({ message: '请输入完整信息' });
-    var result = await (0, _user2.signin)(String(phone), String(password));
+    var result = await (0, _user.signin)(String(phone), String(password));
     if (!result.isSignin || result.user === null) {
       return ctx.error({
         message: '用户不存在或密码错误'
@@ -196,7 +187,7 @@ router.post('/resetPwd', async function (ctx) {
   var session = await (0, _picCode.findPicCode)(captcha.id);
   if (!session || Date.now() - session.time > fiveMinutes) return ctx.error({ message: '验证码已过期' });
   if (picCode.trim() !== session.code) return ctx.error({ message: '验证码不正确' });
-  var user = await (0, _user2.updatePwd)(String(phone), String(password));
+  var user = await (0, _user.updatePwd)(String(phone), String(password));
   var result = { phone: user.phone, id: user._id };
   ctx.success(result, '重置成功');
 });
@@ -210,7 +201,7 @@ router.post('/changePwd', _userAuthed2.default, async function (ctx) {
       prePassword = _ctx$request$body2.prePassword;
 
   if (password !== prePassword) return ctx.error({ message: '两次密码不同' });
-  var user = await (0, _user2.updatePwd)(String(ctx.user.phone), String(password));
+  var user = await (0, _user.updatePwd)(String(ctx.user.phone), String(password));
   ctx.success(user, '修改成功');
 });
 
@@ -223,7 +214,7 @@ router.post('/getWxPhone', async function (ctx) {
       encryptedData = _ctx$request$body3.encryptedData,
       iv = _ctx$request$body3.iv;
 
-  var user = await (0, _user2.getWxEncryptedData)(code, encryptedData, iv);
+  var user = await (0, _user.getWxEncryptedData)(code, encryptedData, iv);
   ctx.token = {
     time: Date.now(),
     uid: user.roles,
@@ -263,10 +254,10 @@ router.post('/update', _userAuthed2.default, async function (ctx) {
   if (user) {
     if (updateInfo.phone) {
       updateInfo.phone = String(updateInfo.phone);
-      var phoneUser = await (0, _user2.findByPhone)(updateInfo.phone);
+      var phoneUser = await (0, _user.findByPhone)(updateInfo.phone);
       if (phoneUser) return ctx.error({ message: '该手机号已存在' });
     }
-    user = await (0, _user2.updateUser)(id, updateInfo); // 更新用户信息
+    user = await (0, _user.updateUser)(id, updateInfo); // 更新用户信息
     ctx.success(user, '更新成功');
   } else {
     ctx.error({ message: '用户不存在' });
