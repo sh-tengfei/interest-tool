@@ -108,7 +108,10 @@ var LoginTypes = {
     uid: user.roles,
     id: String(user._id)
   };
-  ctx.success(user, '注册成功');
+  ctx.success({
+    token: encode(ctx.token),
+    user: user
+  }, '注册成功');
 });
 
 /**
