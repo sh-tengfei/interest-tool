@@ -9,7 +9,6 @@ const router = new Router();
  * 用户注册
  */
 router.get('/interest-list', userAuthed, async (ctx) => {
-
   ctx.success({ interestList: [] }, '')
 });
 
