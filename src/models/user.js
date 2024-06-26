@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { defaultAvatar } from '../config'
 const Schema = mongoose.Schema;
 
 const User = new Schema({
@@ -18,8 +19,8 @@ const User = new Schema({
   },
   username: { type: String, default: null }, // 用户昵称
   gender: { type: String, default: null }, // 性别
-  avatar: { type: String, default: 'http://gips0.baidu.com/it/u=3602773692,1512483864&fm=3028&app=3028&f=JPEG&fmt=auto?w=960&h=1280' }, // 头像
-  openid: { type: String, unique: true, index: true },
+  avatar: { type: String, default: defaultAvatar }, // 头像
+  openid: { type: String, unique: true, index: true, dropDups: true },
   unionid: { type: String, unique: true }
 }, {
     timestamps: true,
