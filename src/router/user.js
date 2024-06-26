@@ -6,6 +6,7 @@ import { savePicCode, findPicCode } from '../service/picCode'
 import { jscode2session } from '../service/weixin'
 import userAuthed from '../middleware/userAuthed'
 import checkUserStat from '../middleware/checkUserStat'
+import { BASE_URL } from '../config'
 const tools = require('../utils/tools');
 const { encode, decode } = require('../utils/token');
 const userService = require('../service/user');
@@ -117,6 +118,7 @@ router.post('/login', async (ctx) => {
 
   ctx.success({
     token: encode(ctx.token),
+    user
   }, '登录成功')
 });
 
@@ -397,5 +399,5 @@ router.post('/commentDetails', checkUserStat, async (ctx) => {
   }
 });
 
-export const path = '/user'
+export const path = `${BASE_URL}/user`
 export default router

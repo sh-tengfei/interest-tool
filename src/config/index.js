@@ -31,6 +31,11 @@ const wxSecrets = {
   production: 'f766f651561758b613e56fafb5c87d21',
 }
 
+const BASE_URLS = {
+  development: '/api',
+  production: '',
+}
+
 export const dbUrl = dbBaseUrls[NODE_ENV]
 export const port = ports[NODE_ENV]
 export const env = NODE_ENV
@@ -38,6 +43,7 @@ export const secret = secrets[NODE_ENV]
 export const keys = keyss[NODE_ENV]
 export const appId = appIds[NODE_ENV]
 export const wxSecret = wxSecrets[NODE_ENV]
+export const BASE_URL = BASE_URLS[NODE_ENV]
 
 export const errorCode = {
   exists: 11000
