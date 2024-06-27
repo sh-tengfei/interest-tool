@@ -10,7 +10,7 @@ module.exports = {
         NODE_ENV: 'production'
       },
       cwd: './',
-      instances : "max",
+      instances : 1,
       exec_mode : "cluster",
       error_file: './logs/app-err.log',
       out_file: './logs/app-out.log',
