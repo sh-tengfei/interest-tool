@@ -1,7 +1,6 @@
 #!/bin/bash
 
 npm install --production
-npm run build
 # tar -zcvf ./release.tgz --exclude={node_modules,.DS_Store,.git,.github,.vscode,README.md,release.tgz,deploy.sh} .
 
 # 先全发文件后期在调整
