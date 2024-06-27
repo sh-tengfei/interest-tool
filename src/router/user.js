@@ -139,7 +139,9 @@ router.post('/resetPwd', async (ctx) => {
  * 发送图片验证码
  */
 router.get('/picCode', async (ctx) => {
-  let captcha = createCaptcha(4);
+  const { codeauth } = ctx.headers
+  if (codeauth !== 'interest-tool') return ctx.error({ message: '非法请求' })
+  const captcha = createCaptcha(4);
   // 将验证码保存入 cookie 中
   const code = captcha.value.toLocaleLowerCase()
   const time = Date.now()

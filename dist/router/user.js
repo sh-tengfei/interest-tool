@@ -183,6 +183,9 @@ router.post('/resetPwd', async function (ctx) {
  * 发送图片验证码
  */
 router.get('/picCode', async function (ctx) {
+  var codeauth = ctx.headers.codeauth;
+
+  if (codeauth !== 'interest-tool') return ctx.error({ message: '非法请求' });
   var captcha = (0, _tools.createCaptcha)(4);
   // 将验证码保存入 cookie 中
   var code = captcha.value.toLocaleLowerCase();

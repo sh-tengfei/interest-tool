@@ -22,6 +22,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 exports.default = async function (ctx, next) {
   var cToken = ctx.cookies.get('authtoken') || ctx.headers.authtoken || ctx.query.authtoken || '';
+  console.log(cToken);
   // token 还能是个list
   if (Array.isArray(cToken)) {
     cToken = cToken[0];
