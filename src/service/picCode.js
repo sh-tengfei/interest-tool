@@ -6,19 +6,19 @@ export function savePicCode(opt) {
 }
 
 export async function findPicCode(code) {
-  const picCode = await PicCodeModel.findOne({ code, isDelete: false })
+  const picCode = await PicCodeModel.findOne({ code })
   return picCode
 }
 
 export async function findAllPic() {
-  const allPics = await PicCodeModel.find({ isDelete: false })
+  const allPics = await PicCodeModel.find()
   return allPics
 }
 
 export async function delPicCode(code) {
-  return await PicCodeModel.updateOne({ code, isDelete: true })
+  return await PicCodeModel.updateOne({ code })
 }
 
 export async function deleteMany(query, update) {
-  return await PicCodeModel.updateMany(query, update)
+  return await PicCodeModel.deleteMany(query, update)
 }

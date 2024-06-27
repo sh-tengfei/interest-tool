@@ -21,19 +21,19 @@ function savePicCode(opt) {
 }
 
 async function findPicCode(code) {
-  var picCode = await _picCode2.default.findOne({ code: code, isDelete: false });
+  var picCode = await _picCode2.default.findOne({ code: code });
   return picCode;
 }
 
 async function findAllPic() {
-  var allPics = await _picCode2.default.find({ isDelete: false });
+  var allPics = await _picCode2.default.find();
   return allPics;
 }
 
 async function delPicCode(code) {
-  return await _picCode2.default.updateOne({ code: code, isDelete: true });
+  return await _picCode2.default.updateOne({ code: code });
 }
 
 async function deleteMany(query, update) {
-  return await _picCode2.default.updateMany(query, update);
+  return await _picCode2.default.deleteMany(query, update);
 }
