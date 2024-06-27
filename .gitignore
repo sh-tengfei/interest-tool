@@ -96,6 +96,5 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-logs/
-logs
+logs/*
 .nuxt
