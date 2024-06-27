@@ -10,9 +10,11 @@
     "lint:fix": "eslint ./src --fix",
     "start": "pm2 start pm2.config.js",
     "stop": "pm2 stop pm2.config.js",
-    "restart": "npx pm2 restart pm2.config.js",
+    "restart": "pm2 restart pm2.config.js",
     "reload": "pm2 reload pm2.config.js",
     "delete": "pm2 delete pm2.config.js",
+    "npx:start": "npx pm2 start pm2.config.js",
+    "npx:restart": "npx pm2 restart pm2.config.js",
     "setup": "pm2 deploy pm2.config.js production setup",
     "deploy": "pm2 deploy pm2.config.js production"
   },
