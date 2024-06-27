@@ -24,7 +24,7 @@ module.exports = {
         "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
         "path" : "/home/www/interest-tool",
         'post-deploy': 'npm run npx:restart',
-        'pre-setup': ''
+        'pre-setup': 'npm run npx:stop'
       }
     }
   }
