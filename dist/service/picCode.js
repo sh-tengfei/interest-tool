@@ -31,7 +31,7 @@ async function findAllPic() {
 }
 
 async function delPicCode(code) {
-  return await _picCode2.default.updateOne({ code: code });
+  return await _picCode2.default.deleteOne({ code: code });
 }
 
 async function deleteMany(query, update) {

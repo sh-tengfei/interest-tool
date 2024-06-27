@@ -16,7 +16,7 @@ export async function findAllPic() {
 }
 
 export async function delPicCode(code) {
-  return await PicCodeModel.updateOne({ code })
+  return await PicCodeModel.deleteOne({ code })
 }
 
 export async function deleteMany(query, update) {
