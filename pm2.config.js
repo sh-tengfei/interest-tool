@@ -3,7 +3,8 @@ module.exports = {
       name   : "interest-tool",
       script : "./dist/main.js",
       env: {
-        NODE_ENV: "production",
+        "NODE_ENV": "production",
+        "PORT": 3000,
       },
       error_file: './logs/app-err.log',
       out_file: './logs/app-out.log',
@@ -14,7 +15,7 @@ module.exports = {
         "user" : "root",
         "host" : ["119.3.187.4"],
         "ref"  : "origin/master",
-        "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
+        "repo" : "  ",
         "path" : "/home/www/interest-tool",
         'post-deploy': 'npm run npx:stop && npm run npx:start',
         'pre-setup': ''
