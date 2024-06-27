@@ -14,7 +14,7 @@ module.exports = {
         "user" : "root",
         "host" : ["119.3.187.4"],
         "ref"  : "origin/master",
-        "repo" : "  ",
+        "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
         "path" : "/home/www/interest-tool",
         'post-deploy': 'npm i && npm run stop && npm run start',
         'pre-setup': ''
