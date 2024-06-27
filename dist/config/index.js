@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var NODE_ENV = process.env.NODE_ENV;
+var NODE_ENV = process.env.NODE_ENV || 'production';
 console.log(NODE_ENV, 'NODE_ENV');
 
 var dbBaseUrls = {
