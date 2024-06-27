@@ -31,8 +31,8 @@ function connectDb() {
         maxConnectTimes++;
         _mongoose2.default.connect(_config.dbUrl);
       } else {
-        reject(new Error('数据库连接失败'));
-        throw new Error('数据库连接失败');
+        reject(new Error('\u6570\u636E\u5E93\u8FDE\u63A5\u5931\u8D25:' + _config.dbUrl));
+        throw new Error('\u6570\u636E\u5E93\u8FDE\u63A5\u5931\u8D25:' + _config.dbUrl);
       }
     });
     // 连接失败操作
@@ -43,7 +43,7 @@ function connectDb() {
         _mongoose2.default.connect(_config.dbUrl);
       } else {
         reject(error);
-        throw new Error('数据库连接失败');
+        throw new Error('\u6570\u636E\u5E93\u8FDE\u63A5\u5931\u8D25:' + _config.dbUrl);
       }
     });
   });

@@ -19,8 +19,8 @@ export default function connectDb() {
         maxConnectTimes++;
         mongoose.connect(dbUrl);
       } else {
-        reject(new Error('数据库连接失败'));
-        throw new Error('数据库连接失败');
+        reject(new Error(`数据库连接失败:${dbUrl}`));
+        throw new Error(`数据库连接失败:${dbUrl}`);
       }
     });
     // 连接失败操作
@@ -31,7 +31,7 @@ export default function connectDb() {
         mongoose.connect(dbUrl);
       } else {
         reject(error);
-        throw new Error('数据库连接失败');
+        throw new Error(`数据库连接失败:${dbUrl}`);
       }
     });
   });
