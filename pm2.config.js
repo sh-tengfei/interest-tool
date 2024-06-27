@@ -20,7 +20,7 @@ module.exports = {
         "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
         "path" : "/home/www/interest-tool",
         'post-deploy': 'npm install && pm2 reload pm2.config.js --env production',
-        'pre-setup': 'mkdir /home/www/interest-tool/source'
+        'pre-setup': ''
       }
     }
   }
