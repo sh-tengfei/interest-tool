@@ -1,5 +1,4 @@
 const NODE_ENV = process.env.NODE_ENV || 'production'
-console.log(NODE_ENV, 'NODE_ENV')
 
 const dbBaseUrls = {
   development: 'mongodb://127.0.0.1/interest-tool',

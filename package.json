@@ -13,11 +13,7 @@
     "restart": "pm2 restart pm2.config.js",
     "reload": "pm2 reload pm2.config.js",
     "delete": "pm2 delete pm2.config.js",
-    "npx:start": "npx pm2 start pm2.config.js",
-    "npx:stop": "npx pm2 stop pm2.config.js",
-    "npx:restart": "npx pm2 restart pm2.config.js",
-    "setup": "pm2 deploy pm2.config.js production setup",
-    "deploy": "pm2 deploy pm2.config.js production"
+    "deploy": "sh deploy.sh"
   },
   "author": "",
   "license": "ISC",
@@ -35,6 +31,7 @@
     "mongoose": "^8.4.3",
     "node-cron": "^3.0.3",
     "nodemon": "^3.1.3",
+    "pm2": "^5.4.1",
     "request": "^2.88.2",
     "silly-datetime": "^0.1.2",
     "svg-captcha": "^1.4.0"
