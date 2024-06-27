@@ -4,21 +4,20 @@ module.exports = {
       script : "./dist/main.js",
       env: {
         "NODE_ENV": "production",
-        "PORT": 3000,
       },
       error_file: './logs/app-err.log',
       out_file: './logs/app-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
     }],
-    // deploy: {
-    //   production : {
-    //     "user" : "root",
-    //     "host" : ["119.3.187.4"],
-    //     "ref"  : "origin/master",
-    //     "repo" : "  ",
-    //     "path" : "/home/www/interest-tool",
-    //     'post-deploy': 'npm run npx:stop && npm run npx:start',
-    //     'pre-setup': ''
-    //   }
-    // }
+    deploy: {
+      production : {
+        "user" : "root",
+        "host" : ["119.3.187.4"],
+        "ref"  : "origin/master",
+        "repo" : "  ",
+        "path" : "/home/www/interest-tool",
+        'post-deploy': 'npm run stop && npm run start',
+        'pre-setup': 'npm i'
+      }
+    }
   }
