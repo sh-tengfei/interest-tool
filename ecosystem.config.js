@@ -2,11 +2,15 @@ module.exports = {
     apps : [{
       name   : "interest-tool",
       script : "./dist/main.js",
-      env: {
-        "NODE_ENV": "development",
-      },
+      // env: {
+      //   "NODE_ENV": "development",
+      // },
+      cwd: './',
       env_production: {
-        NODE_ENV: 'production'
+        NODE_ENV: "production"
+      },
+      env_development: {
+        NODE_ENV: "development"
       },
       instances : "max",
       exec_mode : "cluster",

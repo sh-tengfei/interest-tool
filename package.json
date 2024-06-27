@@ -13,7 +13,7 @@
     "restart": "pm2 restart pm2.config.js",
     "reload": "pm2 reload pm2.config.js",
     "delete": "pm2 delete pm2.config.js",
-    "deploy": "pm2 deploy pm2.config.js production"
+    "deploy": "pm2 deploy ecosystem.config.js production"
   },
   "author": "",
   "license": "ISC",
