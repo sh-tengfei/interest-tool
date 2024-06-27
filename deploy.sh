@@ -17,8 +17,9 @@ npm run build
 # npm run stop &&\
 # npm run start'
 
-ssh root@119.3.187.4 'cd /home/www/interest-prod/ &&\
+ssh root@119.3.187.4 'cd /home/www/interest-tool/ &&\
 git pull &&\
+rm -rf logs/* &&\
 npm i &&\
 npm run restart'
 
