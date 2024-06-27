@@ -3,7 +3,7 @@ module.exports = {
       name   : "interest-tool",
       script : "./dist/main.js",
       env: {
-        "NODE_ENV": "development",
+        NODE_ENV: "development",
       },
       cwd: './',
       instances : "max",
