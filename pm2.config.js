@@ -3,12 +3,9 @@ module.exports = {
       name   : "interest-tool",
       script : "./dist/main.js",
       env: {
-        NODE_ENV: "development",
+        NODE_ENV: "production",
       },
       watch: false,
-      env_production: {
-        NODE_ENV: 'production'
-      },
       cwd: './',
       instances : 1,
       // exec_mode : "cluster",
