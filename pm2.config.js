@@ -9,7 +9,6 @@ module.exports = {
       cwd: './',
       instances : 1,
       merge_logs: true,
-      exec_mode : "fork",
       error_file: './logs/app-err.log',
       out_file: './logs/app-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
