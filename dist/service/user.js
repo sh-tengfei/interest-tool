@@ -90,7 +90,7 @@ async function updatePwd(phone, pwd) {
  * @param {String} phone 用户手机号
  * @param {Object} updateInfo 需要更新的信息
  */
-async function updateUser(id, updateOpt) {
+async function updateUser(_id, updateOpt) {
   delete updateOpt.password;
   delete updateOpt.id;
   await _user2.default.updateOne({ _id: _id }, updateOpt); // 更新用户信息
