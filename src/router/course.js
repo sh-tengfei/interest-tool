@@ -21,9 +21,9 @@ router.post('/create', userAuthed, async (ctx) => {
     const course = await newCourse(id, courseType, courseName)
     ctx.success(course, '创建成功')
   } catch (error) {
-    console.log(error)
     return ctx.error({
       message: '系统错误',
+      error
     })
   }
 });
