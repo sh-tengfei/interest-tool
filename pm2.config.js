@@ -4,6 +4,7 @@ module.exports = {
       script : "./dist/main.js",
       env: {
         "NODE_ENV": "production",
+        "PORT": 3000,
       },
       error_file: './logs/app-err.log',
       out_file: './logs/app-out.log',
