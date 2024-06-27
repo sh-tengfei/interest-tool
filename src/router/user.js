@@ -169,7 +169,6 @@ router.post('/changePwd', userAuthed, async (ctx) => {
   const user = await findById(ctx.user.id)
   if (!user || !user.phone) return ctx.error({ message: '用户不存在或不是账号登录' })
   const result = await updatePwd(user.phone, String(password))
-  console.log(result, user)
   if (!user) return ctx.error({ message: '用户不存在' })
   ctx.success(user, '修改成功')
 });

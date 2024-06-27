@@ -6,7 +6,6 @@ import * as userSv from '../service/user'
 
 export default async(ctx, next) => {
   let cToken = ctx.cookies.get('authtoken') || ctx.headers.authtoken || ctx.query.authtoken || ''
-  console.log(cToken)
   // token 还能是个list
   if (Array.isArray(cToken)) {
     cToken = cToken[0]
