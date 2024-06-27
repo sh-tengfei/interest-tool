@@ -16,8 +16,8 @@ module.exports = {
         "ref"  : "origin/master",
         "repo" : "  ",
         "path" : "/home/www/interest-tool",
-        'post-deploy': 'npm run stop && npm run start',
-        'pre-setup': 'npm i'
+        'post-deploy': 'npm i && npm run stop && npm run start',
+        'pre-setup': ''
       }
     }
   }
