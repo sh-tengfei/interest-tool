@@ -17,6 +17,10 @@ const PicCodeSchema = new Schema({
   uid: {
     type: Number,
     required: true,
+  },
+  isDelete: {
+    type: Boolean, // 是否已删除
+    default: false
   }
 }, {
   timestamps: true,

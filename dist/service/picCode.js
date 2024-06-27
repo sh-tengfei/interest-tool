@@ -5,8 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.savePicCode = savePicCode;
 exports.findPicCode = findPicCode;
+exports.findAllPic = findAllPic;
 exports.delPicCode = delPicCode;
-exports.removePicCode = removePicCode;
+exports.deleteMany = deleteMany;
 
 var _picCode = require('../models/picCode');
 
@@ -20,15 +21,19 @@ function savePicCode(opt) {
 }
 
 async function findPicCode(code) {
-  var picCode = await _picCode2.default.findOne({ code: code });
+  var picCode = await _picCode2.default.findOne({ code: code, isDelete: false });
   return picCode;
+}
+
+async function findAllPic() {
+  var allPics = await _picCode2.default.find({ isDelete: false });
+  return allPics;
 }
 
 async function delPicCode(code) {
-  return await _picCode2.default.deleteOne({ code: code });
+  return await _picCode2.default.updateOne({ code: code, isDelete: true });
 }
 
-async function removePicCode(code) {
-  var picCode = await _picCode2.default.removeOne({ code: code });
-  return picCode;
+async function deleteMany(query, update) {
+  return await _picCode2.default.updateMany(query, update);
 }

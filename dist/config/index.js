@@ -45,6 +45,11 @@ var BASE_URLS = {
   production: ''
 };
 
+var picOutTimes = {
+  development: 1000 * 60 * 5,
+  production: 1000 * 60 * 5
+};
+
 var dbUrl = exports.dbUrl = dbBaseUrls[NODE_ENV];
 var port = exports.port = ports[NODE_ENV];
 var env = exports.env = NODE_ENV;
@@ -54,6 +59,7 @@ var appId = exports.appId = appIds[NODE_ENV];
 var wxSecret = exports.wxSecret = wxSecrets[NODE_ENV];
 var defaultAvatar = exports.defaultAvatar = defaultAvatars[NODE_ENV];
 var BASE_URL = exports.BASE_URL = BASE_URLS[NODE_ENV];
+var picOutTime = exports.picOutTime = picOutTimes[NODE_ENV];
 
 var errorCode = exports.errorCode = {
   exists: 11000

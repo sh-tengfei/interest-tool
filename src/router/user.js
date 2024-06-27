@@ -3,13 +3,12 @@ import { signupWx, signup, signin, updatePwd, findByOpenId, findById, findByPhon
 import { savePicCode, findPicCode, delPicCode } from '../service/picCode'
 import { jscode2session } from '../service/weixin'
 import userAuthed from '../middleware/userAuthed'
-import { BASE_URL } from '../config'
+import { BASE_URL, picOutTime } from '../config'
 import { createCaptcha, getWxEncrypted } from '../utils/tools';
 import { encode, decode } from '../utils/token';
 const userService = require('../service/user');
 
 const router = new Router();
-const fiveMinutes = 1000 * 60 * 5
 // 登录类型
 const LoginTypes = {
   phone: 1,
@@ -44,7 +43,7 @@ router.post('/register', async (ctx) => {
     })
   }
   const session = await findPicCode(captcha.id)
-  if (!session || Date.now() - session.time > fiveMinutes) {
+  if (!session || Date.now() - session.time > picOutTime) {
     await delPicCode(captcha.id)
     return ctx.error({
       message: '验证码已过期',
@@ -129,7 +128,7 @@ router.post('/resetPwd', async (ctx) => {
   // 防止刷库
   if (!captcha.id) return ctx.error({ message: '验证码不存在' })
   const session = await findPicCode(captcha.id)
-  if (!session || Date.now() - session.time > fiveMinutes) return ctx.error({ message: '验证码已过期' })
+  if (!session || Date.now() - session.time > picOutTime) return ctx.error({ message: '验证码已过期' })
   if (picCode.trim() !== session.code) return ctx.error({ message: '验证码不正确' })
   let user = await updatePwd(String(phone), String(password))
   let result = { phone: user.phone, id: user._id }

@@ -37,9 +37,6 @@ function init(app) {
   app.use(_json2.default);
   app.use((0, _koaBody2.default)());
   app.use(_cookie2.default);
-  // app.use(session(app))
-  //   app.use(paged)
   app.use(_axios2.default);
 }
-// import session from './session'
 // import paged from './paged'

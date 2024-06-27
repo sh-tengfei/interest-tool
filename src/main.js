@@ -3,6 +3,7 @@ import { port, env, keys } from './config'
 import connectDb from './db'
 import * as middleware from './middleware'
 import * as router from './router'
+import './tasks'
 (async () => {
   const app = new Koa()
   await connectDb()

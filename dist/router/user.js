@@ -32,7 +32,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var userService = require('../service/user');
 
 var router = new _koaRouter2.default();
-var fiveMinutes = 1000 * 60 * 5;
 // 登录类型
 var LoginTypes = {
   phone: 1,
@@ -74,7 +73,7 @@ var LoginTypes = {
     });
   }
   var session = await (0, _picCode.findPicCode)(captcha.id);
-  if (!session || Date.now() - session.time > fiveMinutes) {
+  if (!session || Date.now() - session.time > _config.picOutTime) {
     await (0, _picCode.delPicCode)(captcha.id);
     return ctx.error({
       message: '验证码已过期',
@@ -173,7 +172,7 @@ router.post('/resetPwd', async function (ctx) {
   // 防止刷库
   if (!captcha.id) return ctx.error({ message: '验证码不存在' });
   var session = await (0, _picCode.findPicCode)(captcha.id);
-  if (!session || Date.now() - session.time > fiveMinutes) return ctx.error({ message: '验证码已过期' });
+  if (!session || Date.now() - session.time > _config.picOutTime) return ctx.error({ message: '验证码已过期' });
   if (picCode.trim() !== session.code) return ctx.error({ message: '验证码不正确' });
   var user = await (0, _user.updatePwd)(String(phone), String(password));
   var result = { phone: user.phone, id: user._id };
