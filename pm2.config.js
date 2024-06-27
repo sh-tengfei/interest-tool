@@ -7,7 +7,7 @@ module.exports = {
       },
       watch: false,
       cwd: './',
-      instances : 0,
+      instances : 1,
       merge_logs: true,
       exec_mode : "fork",
       error_file: './logs/app-err.log',
