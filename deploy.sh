@@ -1,5 +1,7 @@
 #!/bin/bash
-
+git add .
+git commit -m deploy
+git push
 npm install --production
 # tar -zcvf ./release.tgz --exclude={node_modules,.DS_Store,.git,.github,.vscode,README.md,release.tgz,deploy.sh} .
 
