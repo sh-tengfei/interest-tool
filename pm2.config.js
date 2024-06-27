@@ -5,6 +5,10 @@ module.exports = {
       env: {
         NODE_ENV: "development",
       },
+      watch: false,
+      env_production: {
+        NODE_ENV: 'production'
+      },
       cwd: './',
       instances : "max",
       exec_mode : "cluster",
@@ -19,7 +23,7 @@ module.exports = {
         "ref"  : "origin/master",
         "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
         "path" : "/home/www/interest-tool",
-        'post-deploy': 'npm install && pm2 reload pm2.config.js --env production',
+        'post-deploy': 'npm run restart',
         'pre-setup': ''
       }
     }
