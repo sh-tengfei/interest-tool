@@ -18,7 +18,7 @@ module.exports = {
         "host" : ["119.3.187.4"],
         "ref"  : "origin/master",
         "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
-        "path" : "/home/www/interest-tool/",
+        "path" : "/home/www/interest-tool",
         'pre-deploy-local': '',
         'post-deploy': 'npm install && pm2 reload pm2.config.js --env production',
         'pre-setup': ''
