@@ -17,7 +17,7 @@ module.exports = {
         "ref"  : "origin/master",
         "repo" : "git@gitee.com:sh_tengfei/interest-tool.git",
         "path" : "/home/www/remeber",
-        'post-deploy': 'npm run stop && npm run start',
+        'post-deploy': 'npm i && npm run stop && npm run start',
         'pre-setup': ''
       }
     }
