@@ -1,5 +1,4 @@
 import Router from'koa-router';
-import * as mongodb from 'mongodb'
 import userAuthed from '../middleware/userAuthed'
 import { BASE_URL } from '../config'
 import { getCourseList } from '../service/course'
